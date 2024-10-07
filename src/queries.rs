@@ -1,16 +1,14 @@
-use chrono::offset::TimeZone;
-use chrono::{DateTime, Datelike, Duration, Timelike};
+use jiff::{SignedDuration, Zoned};
 
 use crate::ordinal::Ordinal;
 use crate::time_unit::{DaysOfMonth, Hours, Minutes, Months, Seconds, TimeUnitField};
 
+const ONE_SECOND: SignedDuration = SignedDuration::from_secs(1);
+
 // TODO: Possibility of one query struct?
 
-pub struct NextAfterQuery<Z>
-where
-    Z: TimeZone,
-{
-    initial_datetime: DateTime<Z>,
+pub struct NextAfterQuery {
+    initial_datetime: Zoned,
     first_month: bool,
     first_day_of_month: bool,
     first_hour: bool,
@@ -18,13 +16,10 @@ where
     first_second: bool,
 }
 
-impl<Z> NextAfterQuery<Z>
-where
-    Z: TimeZone,
-{
-    pub fn from(after: &DateTime<Z>) -> NextAfterQuery<Z> {
+impl NextAfterQuery {
+    pub fn from(after: &Zoned) -> NextAfterQuery {
         NextAfterQuery {
-            initial_datetime: after.clone() + Duration::seconds(1),
+            initial_datetime: after.clone().saturating_add(ONE_SECOND),
             first_month: true,
             first_day_of_month: true,
             first_hour: true,
@@ -41,7 +36,7 @@ where
     pub fn month_lower_bound(&mut self) -> Ordinal {
         if self.first_month {
             self.first_month = false;
-            return self.initial_datetime.month();
+            return self.initial_datetime.month() as u32;
         }
         Months::inclusive_min()
     }
@@ -54,7 +49,7 @@ where
     pub fn day_of_month_lower_bound(&mut self) -> Ordinal {
         if self.first_day_of_month {
             self.first_day_of_month = false;
-            return self.initial_datetime.day();
+            return self.initial_datetime.day() as u32;
         }
         DaysOfMonth::inclusive_min()
     }
@@ -67,7 +62,7 @@ where
     pub fn hour_lower_bound(&mut self) -> Ordinal {
         if self.first_hour {
             self.first_hour = false;
-            return self.initial_datetime.hour();
+            return self.initial_datetime.hour() as u32;
         }
         Hours::inclusive_min()
     }
@@ -80,7 +75,7 @@ where
     pub fn minute_lower_bound(&mut self) -> Ordinal {
         if self.first_minute {
             self.first_minute = false;
-            return self.initial_datetime.minute();
+            return self.initial_datetime.minute() as u32;
         }
         Minutes::inclusive_min()
     }
@@ -93,7 +88,7 @@ where
     pub fn second_lower_bound(&mut self) -> Ordinal {
         if self.first_second {
             self.first_second = false;
-            return self.initial_datetime.second();
+            return self.initial_datetime.second() as u32;
         }
         Seconds::inclusive_min()
     }
@@ -103,11 +98,8 @@ where
     }
 } // End of impl
 
-pub struct PrevFromQuery<Z>
-where
-    Z: TimeZone,
-{
-    initial_datetime: DateTime<Z>,
+pub struct PrevFromQuery {
+    initial_datetime: Zoned,
     first_month: bool,
     first_day_of_month: bool,
     first_hour: bool,
@@ -115,13 +107,10 @@ where
     first_second: bool,
 }
 
-impl<Z> PrevFromQuery<Z>
-where
-    Z: TimeZone,
-{
-    pub fn from(before: &DateTime<Z>) -> PrevFromQuery<Z> {
+impl PrevFromQuery {
+    pub fn from(before: &Zoned) -> PrevFromQuery {
         PrevFromQuery {
-            initial_datetime: before.clone() - Duration::seconds(1),
+            initial_datetime: before.clone().saturating_sub(ONE_SECOND),
             first_month: true,
             first_day_of_month: true,
             first_hour: true,
@@ -138,7 +127,7 @@ where
     pub fn month_upper_bound(&mut self) -> Ordinal {
         if self.first_month {
             self.first_month = false;
-            return self.initial_datetime.month();
+            return self.initial_datetime.month() as u32;
         }
         Months::inclusive_max()
     }
@@ -151,7 +140,7 @@ where
     pub fn day_of_month_upper_bound(&mut self) -> Ordinal {
         if self.first_day_of_month {
             self.first_day_of_month = false;
-            return self.initial_datetime.day();
+            return self.initial_datetime.day() as u32;
         }
         DaysOfMonth::inclusive_max()
     }
@@ -164,7 +153,7 @@ where
     pub fn hour_upper_bound(&mut self) -> Ordinal {
         if self.first_hour {
             self.first_hour = false;
-            return self.initial_datetime.hour();
+            return self.initial_datetime.hour() as u32;
         }
         Hours::inclusive_max()
     }
@@ -177,7 +166,7 @@ where
     pub fn minute_upper_bound(&mut self) -> Ordinal {
         if self.first_minute {
             self.first_minute = false;
-            return self.initial_datetime.minute();
+            return self.initial_datetime.minute() as u32;
         }
         Minutes::inclusive_max()
     }
@@ -190,7 +179,7 @@ where
     pub fn second_upper_bound(&mut self) -> Ordinal {
         if self.first_second {
             self.first_second = false;
-            return self.initial_datetime.second();
+            return self.initial_datetime.second() as u32;
         }
         Seconds::inclusive_max()
     }
@@ -199,3 +188,4 @@ where
         self.first_second = false;
     }
 }
+
