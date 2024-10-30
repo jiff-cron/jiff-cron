@@ -877,4 +877,109 @@ mod tests {
         assert!(schedule.includes(included));
         assert!(!schedule.includes(not_included));
     }
+
+    pub fn next_ticks(schedule: &str, from_time: &Zoned, take: usize) -> Vec<Zoned> {
+        //               sec  min   hour   day of month   month   day of week   year
+        // let expression = "0   30   9,12,15     1,15       May-Aug  Mon,Wed,Fri  2018/2";
+        match Schedule::from_str(schedule) {
+            Ok(schedule) => schedule.after(from_time).take(take).collect::<Vec<Zoned>>(),
+            Err(_e) => Vec::new(),
+        }
+    }
+
+    #[test]
+    fn test_time_zone_change_up() {
+        // During the night from the 28 to 29 march 2020, France has changed its time from 2am to 3am
+        // So when we reached "2020-03-29T02:00:00 Europe/Paris" we advanced to "2020-03-29T03:00:00 Europe/Paris"
+        let results = next_ticks(
+            "0 * * * * * *",
+            &Zoned::now()
+                .intz("Europe/Paris")
+                .and_then(|zoned| {
+                    zoned
+                        .with()
+                        .year(2020)
+                        .month(3)
+                        .day(29)
+                        .hour(1)
+                        .minute(55)
+                        .second(0)
+                        .build()
+                })
+                .unwrap(),
+            10,
+        );
+        assert_eq!(results.len(), 10);
+        //2020-03-29T01:56:00+01:00[Europe/Paris]
+        assert_eq!(
+            results[0].to_string(),
+            "2020-03-29T01:56:00+01:00[Europe/Paris]"
+        );
+        assert_eq!(
+            results[1].to_string(),
+            "2020-03-29T01:57:00+01:00[Europe/Paris]"
+        );
+        assert_eq!(
+            results[2].to_string(),
+            "2020-03-29T01:58:00+01:00[Europe/Paris]"
+        );
+        assert_eq!(
+            results[3].to_string(),
+            "2020-03-29T01:59:00+01:00[Europe/Paris]"
+        );
+        // Time zone shift here
+        assert_eq!(
+            results[4].to_string(),
+            "2020-03-29T03:00:00+02:00[Europe/Paris]"
+        );
+        assert_eq!(
+            results[5].to_string(),
+            "2020-03-29T03:01:00+02:00[Europe/Paris]"
+        );
+        assert_eq!(
+            results[6].to_string(),
+            "2020-03-29T03:02:00+02:00[Europe/Paris]"
+        );
+        assert_eq!(
+            results[7].to_string(),
+            "2020-03-29T03:03:00+02:00[Europe/Paris]"
+        );
+        assert_eq!(
+            results[8].to_string(),
+            "2020-03-29T03:04:00+02:00[Europe/Paris]"
+        );
+        assert_eq!(
+            results[9].to_string(),
+            "2020-03-29T03:05:00+02:00[Europe/Paris]"
+        );
+    }
+
+    #[test]
+    fn test_time_zone_change_down() {
+        // During the night from the 24 to 25 october 2020, France has changed its time from 3am to 2am
+        // So when we reached "2020-10-25T03:00:00 Europe/Paris" we went back to "2020-10-25T02:00:00 Europe/Paris"
+        let results = next_ticks(
+            "0 * * * * * *",
+            &Zoned::now()
+                .intz("Europe/Paris")
+                .and_then(|zoned| {
+                    zoned
+                        .with()
+                        .year(2020)
+                        .month(10)
+                        .day(25)
+                        .hour(2)
+                        .minute(55)
+                        .second(0)
+                        .build()
+                })
+                .unwrap(),
+            1,
+        );
+        assert_eq!(results.len(), 1);
+        assert_eq!(
+            results[0].to_string(),
+            "2020-10-25T02:56:00+02:00[Europe/Paris]"
+        );
+    }
 }
