@@ -1,28 +1,34 @@
-use nom::branch::alt;
-use nom::bytes::complete::tag;
-use nom::character::complete::{alpha1, digit1, multispace0};
-use nom::combinator::{all_consuming, eof, map, map_res, opt};
-use nom::multi::separated_list1;
-use nom::sequence::{delimited, separated_pair, terminated, tuple};
-use nom::IResult;
+use std::{
+    borrow::Cow,
+    convert::TryFrom,
+    str::{self, FromStr},
+};
 
-use std::borrow::Cow;
-use std::convert::TryFrom;
-use std::str::{self, FromStr};
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    character::complete::{alpha1, digit1, multispace0},
+    combinator::{all_consuming, eof, map, map_res, opt},
+    multi::separated_list1,
+    sequence::{delimited, separated_pair, terminated, tuple},
+    IResult,
+};
 
-use crate::error::{Error, ErrorKind};
-use crate::ordinal::*;
-use crate::schedule::{Schedule, ScheduleFields};
-use crate::specifier::*;
-use crate::time_unit::*;
+use crate::{
+    error::{Error, ErrorKind},
+    ordinal::*,
+    schedule::{Schedule, ScheduleFields},
+    specifier::*,
+    time_unit::*,
+};
 
 impl TryFrom<Cow<'_, str>> for Schedule {
     type Error = Error;
 
     fn try_from(expression: Cow<'_, str>) -> Result<Self, Self::Error> {
         match schedule(&expression) {
-            Ok((_, schedule_fields)) => Ok(Schedule::new(expression.into_owned(), schedule_fields)), // Extract from nom tuple
-            Err(_) => Err(ErrorKind::Expression("Invalid cron expression.".to_owned()).into()), //TODO: Details
+            Ok((_, schedule_fields)) => Ok(Schedule::new(expression.into_owned(), schedule_fields)), /* Extract from nom tuple */
+            Err(_) => Err(ErrorKind::Expression("Invalid cron expression.".to_owned()).into()), /* TODO: Details */
         }
     }
 }

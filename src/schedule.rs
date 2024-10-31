@@ -1,5 +1,7 @@
-use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::ops::Bound::{Included, Unbounded};
+use std::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    ops::Bound::{Included, Unbounded},
+};
 
 use jiff::{civil::date, tz::TimeZone, Zoned};
 #[cfg(feature = "serde")]
@@ -8,9 +10,7 @@ use serde::{
     Deserialize, Serialize, Serializer,
 };
 
-use crate::ordinal::*;
-use crate::queries::*;
-use crate::time_unit::*;
+use crate::{ordinal::*, queries::*, time_unit::*};
 
 impl From<Schedule> for String {
     fn from(schedule: Schedule) -> String {
@@ -256,8 +256,8 @@ impl Schedule {
         None
     }
 
-    /// Provides an iterator which will return each DateTime that matches the schedule starting with
-    /// the current time if applicable.
+    /// Provides an iterator which will return each DateTime that matches the
+    /// schedule starting with the current time if applicable.
     pub fn upcoming(&self, timezone: TimeZone) -> ScheduleIterator<'_> {
         let after = Zoned::now().with_time_zone(timezone);
         self.after(&after)
@@ -269,7 +269,8 @@ impl Schedule {
         self.after_owned(after)
     }
 
-    /// Like the `upcoming` method, but allows you to specify a start time other than the present.
+    /// Like the `upcoming` method, but allows you to specify a start time other
+    /// than the present.
     pub fn after(&self, after: &Zoned) -> ScheduleIterator<'_> {
         ScheduleIterator::new(self, after)
     }
@@ -295,37 +296,44 @@ impl Schedule {
             && self.fields.seconds.includes(date_time.second() as Ordinal)
     }
 
-    /// Returns a [TimeUnitSpec] describing the years included in this [Schedule].
+    /// Returns a [TimeUnitSpec] describing the years included in this
+    /// [Schedule].
     pub fn years(&self) -> &impl TimeUnitSpec {
         &self.fields.years
     }
 
-    /// Returns a [TimeUnitSpec] describing the months of the year included in this [Schedule].
+    /// Returns a [TimeUnitSpec] describing the months of the year included in
+    /// this [Schedule].
     pub fn months(&self) -> &impl TimeUnitSpec {
         &self.fields.months
     }
 
-    /// Returns a [TimeUnitSpec] describing the days of the month included in this [Schedule].
+    /// Returns a [TimeUnitSpec] describing the days of the month included in
+    /// this [Schedule].
     pub fn days_of_month(&self) -> &impl TimeUnitSpec {
         &self.fields.days_of_month
     }
 
-    /// Returns a [TimeUnitSpec] describing the days of the week included in this [Schedule].
+    /// Returns a [TimeUnitSpec] describing the days of the week included in
+    /// this [Schedule].
     pub fn days_of_week(&self) -> &impl TimeUnitSpec {
         &self.fields.days_of_week
     }
 
-    /// Returns a [TimeUnitSpec] describing the hours of the day included in this [Schedule].
+    /// Returns a [TimeUnitSpec] describing the hours of the day included in
+    /// this [Schedule].
     pub fn hours(&self) -> &impl TimeUnitSpec {
         &self.fields.hours
     }
 
-    /// Returns a [TimeUnitSpec] describing the minutes of the hour included in this [Schedule].
+    /// Returns a [TimeUnitSpec] describing the minutes of the hour included in
+    /// this [Schedule].
     pub fn minutes(&self) -> &impl TimeUnitSpec {
         &self.fields.minutes
     }
 
-    /// Returns a [TimeUnitSpec] describing the seconds of the minute included in this [Schedule].
+    /// Returns a [TimeUnitSpec] describing the seconds of the minute included
+    /// in this [Schedule].
     pub fn seconds(&self) -> &impl TimeUnitSpec {
         &self.fields.seconds
     }

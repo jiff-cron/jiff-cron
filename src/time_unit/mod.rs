@@ -6,21 +6,17 @@ mod months;
 mod seconds;
 mod years;
 
-pub use self::days_of_month::DaysOfMonth;
-pub use self::days_of_week::DaysOfWeek;
-pub use self::hours::Hours;
-pub use self::minutes::Minutes;
-pub use self::months::Months;
-pub use self::seconds::Seconds;
-pub use self::years::Years;
+use std::{borrow::Cow, collections::btree_set, iter, ops::RangeBounds};
 
-use crate::error::*;
-use crate::ordinal::{Ordinal, OrdinalSet};
-use crate::specifier::{RootSpecifier, Specifier};
-use std::borrow::Cow;
-use std::collections::btree_set;
-use std::iter;
-use std::ops::RangeBounds;
+pub use self::{
+    days_of_month::DaysOfMonth, days_of_week::DaysOfWeek, hours::Hours, minutes::Minutes,
+    months::Months, seconds::Seconds, years::Years,
+};
+use crate::{
+    error::*,
+    ordinal::{Ordinal, OrdinalSet},
+    specifier::{RootSpecifier, Specifier},
+};
 
 pub struct OrdinalIter<'a> {
     set_iter: btree_set::Iter<'a, Ordinal>,
@@ -56,12 +52,15 @@ impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
     }
 }
 
-/// Methods exposing a schedule's configured ordinals for each individual unit of time.
-/// # Example
+/// Methods exposing a schedule's configured ordinals for each individual unit
+/// of time. # Example
 /// ```
-/// use jiff_cron::{Schedule,TimeUnitSpec};
-/// use std::ops::Bound::{Included,Excluded};
-/// use std::str::FromStr;
+/// use std::{
+///     ops::Bound::{Excluded, Included},
+///     str::FromStr,
+/// };
+///
+/// use jiff_cron::{Schedule, TimeUnitSpec};
 ///
 /// let expression = "* * * * * * 2015-2044";
 /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -89,12 +88,13 @@ impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
 /// assert_eq!(None, five_year_plan.next());
 /// ```
 pub trait TimeUnitSpec {
-    /// Returns true if the provided ordinal was included in the schedule spec for the unit of time
-    /// being described.
+    /// Returns true if the provided ordinal was included in the schedule spec
+    /// for the unit of time being described.
     /// # Example
     /// ```
-    /// use jiff_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
+    ///
+    /// use jiff_cron::{Schedule, TimeUnitSpec};
     ///
     /// let expression = "* * * * * * 2015-2044";
     /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -105,12 +105,13 @@ pub trait TimeUnitSpec {
     /// ```
     fn includes(&self, ordinal: Ordinal) -> bool;
 
-    /// Provides an iterator which will return each included ordinal for this schedule in order from
-    /// lowest to highest.
+    /// Provides an iterator which will return each included ordinal for this
+    /// schedule in order from lowest to highest.
     /// # Example
     /// ```
-    /// use jiff_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
+    ///
+    /// use jiff_cron::{Schedule, TimeUnitSpec};
     ///
     /// let expression = "* * * * 5-8 * *";
     /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -125,12 +126,15 @@ pub trait TimeUnitSpec {
     /// ```
     fn iter(&self) -> OrdinalIter<'_>;
 
-    /// Provides an iterator which will return each included ordinal within the specified range.
-    /// # Example
+    /// Provides an iterator which will return each included ordinal within the
+    /// specified range. # Example
     /// ```
-    /// use jiff_cron::{Schedule,TimeUnitSpec};
-    /// use std::ops::Bound::{Included,Excluded};
-    /// use std::str::FromStr;
+    /// use std::{
+    ///     ops::Bound::{Excluded, Included},
+    ///     str::FromStr,
+    /// };
+    ///
+    /// use jiff_cron::{Schedule, TimeUnitSpec};
     ///
     /// let expression = "* * * 1,15 * * *";
     /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -147,8 +151,9 @@ pub trait TimeUnitSpec {
     /// Returns the number of ordinals included in the associated schedule
     /// # Example
     /// ```
-    /// use jiff_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
+    ///
+    /// use jiff_cron::{Schedule, TimeUnitSpec};
     ///
     /// let expression = "* * * 1,15 * * *";
     /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -157,11 +162,12 @@ pub trait TimeUnitSpec {
     /// ```
     fn count(&self) -> u32;
 
-    /// Checks if this TimeUnitSpec is defined as all possibilities (thus created with a '*', '?' or in the case of weekdays '1-7')
-    /// # Example
+    /// Checks if this TimeUnitSpec is defined as all possibilities (thus
+    /// created with a '*', '?' or in the case of weekdays '1-7') # Example
     /// ```
-    /// use jiff_cron::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
+    ///
+    /// use jiff_cron::{Schedule, TimeUnitSpec};
     ///
     /// let expression = "* * * 1,15 * * *";
     /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
@@ -230,8 +236,7 @@ where
 
     fn ordinal_from_name(name: &str) -> Result<Ordinal, Error> {
         Err(ErrorKind::Expression(format!(
-            "The '{}' field does not support using names. '{}' \
-             specified.",
+            "The '{}' field does not support using names. '{}' specified.",
             Self::name(),
             name
         ))
@@ -241,8 +246,7 @@ where
         //println!("validate_ordinal for {} => {}", Self::name(), ordinal);
         match ordinal {
             i if i < Self::inclusive_min() => Err(ErrorKind::Expression(format!(
-                "{} must be greater than or equal to {}. ('{}' \
-                 specified.)",
+                "{} must be greater than or equal to {}. ('{}' specified.)",
                 Self::name(),
                 Self::inclusive_min(),
                 i

@@ -1,7 +1,9 @@
 use jiff::{SignedDuration, Zoned};
 
-use crate::ordinal::Ordinal;
-use crate::time_unit::{DaysOfMonth, Hours, Minutes, Months, Seconds, TimeUnitField};
+use crate::{
+    ordinal::Ordinal,
+    time_unit::{DaysOfMonth, Hours, Minutes, Months, Seconds, TimeUnitField},
+};
 
 const ONE_SECOND: SignedDuration = SignedDuration::from_secs(1);
 

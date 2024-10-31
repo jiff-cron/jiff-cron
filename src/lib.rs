@@ -6,18 +6,19 @@
 //! # Example
 //!
 //! ```
-//! use jiff_cron::Schedule;
-//! use jiff::tz::TimeZone;
 //! use std::str::FromStr;
 //!
+//! use jiff::tz::TimeZone;
+//! use jiff_cron::Schedule;
+//!
 //! fn main() {
-//!   //               sec  min   hour   day of month   month   day of week   year
-//!   let expression = "0   30   9,12,15     1,15       May-Aug  Mon,Wed,Fri  2018/2";
-//!   let schedule = Schedule::from_str(expression).unwrap();
-//!   println!("Upcoming fire times:");
-//!   for datetime in schedule.upcoming(TimeZone::UTC).take(10) {
-//!     println!("-> {}", datetime);
-//!   }
+//!     //               sec  min   hour   day of month   month   day of week   year
+//!     let expression = "0   30   9,12,15     1,15       May-Aug  Mon,Wed,Fri  2018/2";
+//!     let schedule = Schedule::from_str(expression).unwrap();
+//!     println!("Upcoming fire times:");
+//!     for datetime in schedule.upcoming(TimeZone::UTC).take(10) {
+//!         println!("-> {}", datetime);
+//!     }
 //! }
 //!
 //! /*
@@ -45,5 +46,7 @@ mod schedule;
 mod specifier;
 mod time_unit;
 
-pub use crate::schedule::{OwnedScheduleIterator, Schedule, ScheduleIterator};
-pub use crate::time_unit::TimeUnitSpec;
+pub use crate::{
+    schedule::{OwnedScheduleIterator, Schedule, ScheduleIterator},
+    time_unit::TimeUnitSpec,
+};

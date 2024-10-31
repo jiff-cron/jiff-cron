@@ -8,13 +8,15 @@ pub enum Specifier {
     NamedRange(String, String),
 }
 
-// Separating out a root specifier allows for a higher tiered specifier, allowing us to achieve
-// periods with base values that are more advanced than an ordinal:
+// Separating out a root specifier allows for a higher tiered specifier,
+// allowing us to achieve periods with base values that are more advanced than
+// an ordinal:
 // - all: '*/2'
 // - range: '10-2/2'
 // - named range: 'Mon-Thurs/2'
 //
-// Without this separation we would end up with invalid combinations such as 'Mon/2'
+// Without this separation we would end up with invalid combinations such as
+// 'Mon/2'
 #[derive(Debug, PartialEq)]
 pub enum RootSpecifier {
     Specifier(Specifier),

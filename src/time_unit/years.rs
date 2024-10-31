@@ -1,7 +1,11 @@
-use crate::ordinal::{Ordinal, OrdinalSet};
-use crate::time_unit::TimeUnitField;
-use once_cell::sync::Lazy;
 use std::borrow::Cow;
+
+use once_cell::sync::Lazy;
+
+use crate::{
+    ordinal::{Ordinal, OrdinalSet},
+    time_unit::TimeUnitField,
+};
 
 static ALL: Lazy<OrdinalSet> = Lazy::new(Years::supported_ordinals);
 
@@ -20,8 +24,8 @@ impl TimeUnitField for Years {
         Cow::from("Years")
     }
 
-    // TODO: Using the default impl, this will make a set w/100+ items each time "*" is used.
-    // This is obviously suboptimal.
+    // TODO: Using the default impl, this will make a set w/100+ items each time "*"
+    // is used. This is obviously suboptimal.
     fn inclusive_min() -> Ordinal {
         1970
     }

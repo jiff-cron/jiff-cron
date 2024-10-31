@@ -1,11 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use jiff::civil::date;
-    use jiff::tz::TimeZone;
-    use jiff::Zoned;
+    use std::{
+        ops::Bound::{Excluded, Included},
+        str::FromStr,
+    };
+
+    use jiff::{civil::date, tz::TimeZone, Zoned};
     use jiff_cron::{Schedule, TimeUnitSpec};
-    use std::ops::Bound::{Excluded, Included};
-    use std::str::FromStr;
 
     #[test]
     fn test_readme() {
