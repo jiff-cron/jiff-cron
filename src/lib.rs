@@ -5,11 +5,10 @@
 //!
 //! # Example
 //!
-//! ```
+//! ```rust
 //! use std::str::FromStr;
 //!
-//! use jiff::tz::TimeZone;
-//! use jiff_cron::Schedule;
+//! use jiff_cron::{jiff::tz::TimeZone, Schedule};
 //!
 //! fn main() {
 //!     //               sec  min   hour   day of month   month   day of week   year
@@ -45,6 +44,8 @@ mod queries;
 mod schedule;
 mod specifier;
 mod time_unit;
+
+pub use jiff;
 
 pub use crate::{
     schedule::{OwnedScheduleIterator, Schedule, ScheduleIterator},

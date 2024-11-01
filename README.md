@@ -3,8 +3,7 @@
 A cron expression parser built with `jiff`.
 
 ```rust
-use jiff_cron::Schedule;
-use jiff::tz::TimeZone;
+use jiff_cron::{jiff::tz::TimeZone, Schedule};
 use std::str::FromStr;
 
 fn main() {

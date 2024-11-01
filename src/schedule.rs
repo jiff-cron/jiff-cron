@@ -256,8 +256,8 @@ impl Schedule {
         None
     }
 
-    /// Provides an iterator which will return each DateTime that matches the
-    /// schedule starting with the current time if applicable.
+    /// Provides an iterator which will return each [`jiff::Zoned`] that matches
+    /// the schedule starting with the current time if applicable.
     pub fn upcoming(&self, timezone: TimeZone) -> ScheduleIterator<'_> {
         let after = Zoned::now().with_time_zone(timezone);
         self.after(&after)
