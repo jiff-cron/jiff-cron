@@ -53,8 +53,11 @@ impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
 }
 
 /// Methods exposing a schedule's configured ordinals for each individual unit
-/// of time. # Example
-/// ```
+/// of time.
+///
+/// # Example
+///
+/// ```rust
 /// use std::{
 ///     ops::Bound::{Excluded, Included},
 ///     str::FromStr,
@@ -90,8 +93,10 @@ impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
 pub trait TimeUnitSpec {
     /// Returns true if the provided ordinal was included in the schedule spec
     /// for the unit of time being described.
+    ///
     /// # Example
-    /// ```
+    ///
+    /// ```rust
     /// use std::str::FromStr;
     ///
     /// use jiff_cron::{Schedule, TimeUnitSpec};
@@ -107,8 +112,11 @@ pub trait TimeUnitSpec {
 
     /// Provides an iterator which will return each included ordinal for this
     /// schedule in order from lowest to highest.
+    ///
+    ///
     /// # Example
-    /// ```
+    ///
+    /// ```rust
     /// use std::str::FromStr;
     ///
     /// use jiff_cron::{Schedule, TimeUnitSpec};
@@ -127,8 +135,11 @@ pub trait TimeUnitSpec {
     fn iter(&self) -> OrdinalIter<'_>;
 
     /// Provides an iterator which will return each included ordinal within the
-    /// specified range. # Example
-    /// ```
+    /// specified range.
+    ///
+    /// # Example
+    ///
+    /// ```rust
     /// use std::{
     ///     ops::Bound::{Excluded, Included},
     ///     str::FromStr,
@@ -149,8 +160,10 @@ pub trait TimeUnitSpec {
         R: RangeBounds<Ordinal>;
 
     /// Returns the number of ordinals included in the associated schedule
+    ///
     /// # Example
-    /// ```
+    ///
+    /// ```rust
     /// use std::str::FromStr;
     ///
     /// use jiff_cron::{Schedule, TimeUnitSpec};
@@ -163,8 +176,11 @@ pub trait TimeUnitSpec {
     fn count(&self) -> u32;
 
     /// Checks if this TimeUnitSpec is defined as all possibilities (thus
-    /// created with a '*', '?' or in the case of weekdays '1-7') # Example
-    /// ```
+    /// created with a '*', '?' or in the case of weekdays '1-7')
+    ///
+    /// # Example
+    ///
+    /// ```rust
     /// use std::str::FromStr;
     ///
     /// use jiff_cron::{Schedule, TimeUnitSpec};
