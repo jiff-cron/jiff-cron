@@ -22,14 +22,14 @@ pub struct OrdinalIter<'a> {
     set_iter: btree_set::Iter<'a, Ordinal>,
 }
 
-impl<'a> Iterator for OrdinalIter<'a> {
+impl Iterator for OrdinalIter<'_> {
     type Item = Ordinal;
     fn next(&mut self) -> Option<Ordinal> {
         self.set_iter.next().copied()
     }
 }
 
-impl<'a> DoubleEndedIterator for OrdinalIter<'a> {
+impl DoubleEndedIterator for OrdinalIter<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.set_iter.next_back().copied()
     }
@@ -39,14 +39,14 @@ pub struct OrdinalRangeIter<'a> {
     range_iter: btree_set::Range<'a, Ordinal>,
 }
 
-impl<'a> Iterator for OrdinalRangeIter<'a> {
+impl Iterator for OrdinalRangeIter<'_> {
     type Item = Ordinal;
     fn next(&mut self) -> Option<Ordinal> {
         self.range_iter.next().copied()
     }
 }
 
-impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
+impl DoubleEndedIterator for OrdinalRangeIter<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.range_iter.next_back().copied()
     }
@@ -318,7 +318,7 @@ where
         let ordinals = match root_specifier {
             RootSpecifier::Specifier(specifier) => Self::ordinals_from_specifier(specifier)?,
             RootSpecifier::Period(_, 0) => {
-                Err(ErrorKind::Expression(format!("range step cannot be zero")))?
+                Err(ErrorKind::Expression("range step cannot be zero".to_string()))?
             }
             RootSpecifier::Period(start, step) => {
                 if *step < 1 || *step > Self::inclusive_max() {

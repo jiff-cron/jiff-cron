@@ -408,7 +408,7 @@ impl<'a> ScheduleIterator<'a> {
     }
 }
 
-impl<'a> Iterator for ScheduleIterator<'a> {
+impl Iterator for ScheduleIterator<'_> {
     type Item = Zoned;
 
     fn next(&mut self) -> Option<Zoned> {
@@ -423,7 +423,7 @@ impl<'a> Iterator for ScheduleIterator<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for ScheduleIterator<'a> {
+impl DoubleEndedIterator for ScheduleIterator<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let previous = self.previous_datetime.take()?;
 
@@ -500,7 +500,7 @@ fn days_in_month(month: Ordinal, year: Ordinal) -> u32 {
 struct ScheduleVisitor;
 
 #[cfg(feature = "serde")]
-impl<'de> Visitor<'de> for ScheduleVisitor {
+impl Visitor<'_> for ScheduleVisitor {
     type Value = Schedule;
 
     fn expecting(&self, formatter: &mut Formatter<'_>) -> FmtResult {
@@ -710,7 +710,7 @@ mod test {
 
         // Triggers on 2022-06-01. Note that the month and day are smaller than
         // the month and day in `starting_point`.
-        let expression = format!("0 5 17 1 6 ? 2022");
+        let expression = "0 5 17 1 6 ? 2022".to_string();
         let schedule = Schedule::from_str(&expression).unwrap();
         let next = schedule.next_after(&starting_point);
         println!("NEXT AFTER for {} {:?}", expression, next);
