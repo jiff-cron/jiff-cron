@@ -296,31 +296,31 @@ impl Schedule {
             && self.fields.seconds.includes(date_time.second() as Ordinal)
     }
 
-    /// Returns a [TimeUnitSpec] describing the years included in this
+    /// Returns a [`TimeUnitSpec`] describing the years included in this
     /// [Schedule].
     pub fn years(&self) -> &impl TimeUnitSpec {
         &self.fields.years
     }
 
-    /// Returns a [TimeUnitSpec] describing the months of the year included in
+    /// Returns a [`TimeUnitSpec`] describing the months of the year included in
     /// this [Schedule].
     pub fn months(&self) -> &impl TimeUnitSpec {
         &self.fields.months
     }
 
-    /// Returns a [TimeUnitSpec] describing the days of the month included in
+    /// Returns a [`TimeUnitSpec`] describing the days of the month included in
     /// this [Schedule].
     pub fn days_of_month(&self) -> &impl TimeUnitSpec {
         &self.fields.days_of_month
     }
 
-    /// Returns a [TimeUnitSpec] describing the days of the week included in
+    /// Returns a [`TimeUnitSpec`] describing the days of the week included in
     /// this [Schedule].
     pub fn days_of_week(&self) -> &impl TimeUnitSpec {
         &self.fields.days_of_week
     }
 
-    /// Returns a [TimeUnitSpec] describing the hours of the day included in
+    /// Returns a [`TimeUnitSpec`] describing the hours of the day included in
     /// this [Schedule].
     pub fn hours(&self) -> &impl TimeUnitSpec {
         &self.fields.hours
@@ -332,7 +332,7 @@ impl Schedule {
         &self.fields.minutes
     }
 
-    /// Returns a [TimeUnitSpec] describing the seconds of the minute included
+    /// Returns a [`TimeUnitSpec`] describing the seconds of the minute included
     /// in this [Schedule].
     pub fn seconds(&self) -> &impl TimeUnitSpec {
         &self.fields.seconds
