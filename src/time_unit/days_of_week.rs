@@ -1,6 +1,4 @@
-use std::borrow::Cow;
-
-use once_cell::sync::Lazy;
+use std::{borrow::Cow, sync::LazyLock};
 
 use crate::{
     error::*,
@@ -8,7 +6,7 @@ use crate::{
     time_unit::TimeUnitField,
 };
 
-static ALL: Lazy<OrdinalSet> = Lazy::new(DaysOfWeek::supported_ordinals);
+static ALL: LazyLock<OrdinalSet> = LazyLock::new(DaysOfWeek::supported_ordinals);
 
 #[derive(Clone, Debug, Eq)]
 pub struct DaysOfWeek {

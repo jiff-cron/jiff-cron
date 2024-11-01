@@ -40,7 +40,11 @@ Licensed under either of
 - MIT license ([LICENSE-MIT](LICENSE-MIT) or https://opensource.org/licenses/MIT)
   at your option.
 
-### Contribution
+## Minimum supported Rust version (MSRV)
+
+This crate requires Rust 1.80.0 or newer.
+
+## Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you shall be dual licensed as above, without any

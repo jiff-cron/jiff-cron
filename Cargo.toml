@@ -16,7 +16,6 @@ edition = "2021"
 [dependencies]
 jiff = "0.1"
 nom = "~7"
-once_cell = "1.10"
 serde = {version = "1.0.164", optional = true }
 
 [dev-dependencies]
