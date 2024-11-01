@@ -22,6 +22,21 @@ jobs:
         run: |
           cargo +nightly --locked fmt --all -- --check
 
+  check-docs:
+    runs-on: ubuntu-latest
+    env:
+      SQLX_OFFLINE: true
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo doc
+        env:
+          RUSTDOCFLAGS: "-D rustdoc::broken-intra-doc-links"
+        run: |
+          cargo doc --all-features --no-deps
+
   build:
     runs-on: ubuntu-latest
 
