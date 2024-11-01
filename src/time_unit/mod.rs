@@ -317,9 +317,9 @@ where
     fn ordinals_from_root_specifier(root_specifier: &RootSpecifier) -> Result<OrdinalSet, Error> {
         let ordinals = match root_specifier {
             RootSpecifier::Specifier(specifier) => Self::ordinals_from_specifier(specifier)?,
-            RootSpecifier::Period(_, 0) => {
-                Err(ErrorKind::Expression("range step cannot be zero".to_string()))?
-            }
+            RootSpecifier::Period(_, 0) => Err(ErrorKind::Expression(
+                "range step cannot be zero".to_string(),
+            ))?,
             RootSpecifier::Period(start, step) => {
                 if *step < 1 || *step > Self::inclusive_max() {
                     return Err(ErrorKind::Expression(format!(
