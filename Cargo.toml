@@ -2,6 +2,7 @@
 name = "jiff-cron"
 version = "0.1.1"
 authors = [
+    "Leonie Philine Bitto <bitto@posteo.de>",
     "Max Countryman <hello@maxcountryman.com>",
     "Zack Slayton <zack.slayton@gmail.com>",
 ]
