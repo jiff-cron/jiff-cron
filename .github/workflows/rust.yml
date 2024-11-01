@@ -8,17 +8,30 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          rustup toolchain install nightly --profile minimal --component rustfmt --component clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: clippy
+        run: |
+          cargo --locked clippy --all --all-targets --all-features -- -Dwarnings
+      - name: rustfmt
+        run: |
+          cargo +nightly --locked fmt --all -- --check
 
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests (default features)
-      run: cargo test --verbose
-    - name: Run tests (all features)
-      run: cargo test --verbose --all-features
-    - name: Build docs
-      run: cargo doc --no-deps --verbose
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests (default features)
+        run: cargo test --verbose
+      - name: Run tests (all features)
+        run: cargo test --verbose --all-features
+      - name: Build docs
+        run: cargo doc --no-deps --verbose
