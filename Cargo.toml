@@ -16,16 +16,16 @@ edition = "2021"
 
 [dependencies]
 jiff = "0.1"
-nom = "~7"
-serde = {version = "1.0.164", optional = true }
+nom = "7"
+serde = {version = "1", optional = true }
 
 [dev-dependencies]
-serde_test = "1.0.164"
+serde_test = "1"
 
 # Dev-dependency for feature "serde".
 # Optional dev-dependencies are not supported yet.
 # Cargo feature request is available at https://github.com/rust-lang/cargo/issues/1596
-postcard = { version = "1.0.10", default-features = false, features = ["use-std"] }
+postcard = { version = "1", default-features = false, features = ["use-std"] }
 
 [features]
 serde = ["dep:serde"]
