@@ -2,6 +2,8 @@
 
 A cron expression parser built with `jiff`.
 
+## Example
+
 ```rust
 use jiff_cron::{jiff::tz::TimeZone, Schedule};
 use std::str::FromStr;
@@ -30,6 +32,17 @@ Upcoming fire times:
 -> 2018-08-15 09:30:00 UTC
 */
 ```
+
+## Installation
+
+Add to your `Cargo.toml`:
+
+```toml
+jiff-cron = "0.1.1"
+```
+
+You can enable optional [`serde`](https://docs.rs/crate/serde) support
+via [crate feature toggle](https://docs.rs/crate/jiff-cron/latest/features).
 
 ## License
 
