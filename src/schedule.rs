@@ -681,11 +681,11 @@ mod test {
         assert!(next.is_some());
 
         let next2 = schedule.next_after(next.as_ref().unwrap());
-        println!("NEXT2 AFTER for {} {:?}", expression, next2);
+        println!("NEXT2 AFTER for {expression} {next2:?}");
         assert!(next2.is_some());
 
         let prev = schedule.prev_from(next2.as_ref().unwrap());
-        println!("PREV FROM for {} {:?}", expression, prev);
+        println!("PREV FROM for {expression} {prev:?}");
         assert!(prev.is_some());
         assert_eq!(prev, next);
 
@@ -695,7 +695,7 @@ mod test {
                 .map(|next2| next2.saturating_add(SignedDuration::from_millis(100)))
                 .unwrap(),
         );
-        println!("PREV2 FROM for {} {:?}", expression, prev2);
+        println!("PREV2 FROM for {expression} {prev2:?}");
         assert!(prev2.is_some());
         assert_eq!(prev2, next2);
     }
@@ -713,7 +713,7 @@ mod test {
         let expression = "0 5 17 1 6 ? 2022".to_string();
         let schedule = Schedule::from_str(&expression).unwrap();
         let next = schedule.next_after(&starting_point);
-        println!("NEXT AFTER for {} {:?}", expression, next);
+        println!("NEXT AFTER for {expression} {next:?}");
         assert!(next.is_some());
     }
 
@@ -723,7 +723,7 @@ mod test {
         let schedule = Schedule::from_str(expression).unwrap();
         let utc_now = Zoned::now().with_time_zone(TimeZone::UTC);
         let prev = schedule.prev_from(&utc_now);
-        println!("PREV FROM for {} {:?}", expression, prev);
+        println!("PREV FROM for {expression} {prev:?}");
         assert!(prev.is_some());
     }
 
@@ -733,7 +733,7 @@ mod test {
         let schedule = Schedule::from_str(expression).unwrap();
         let utc_now = Zoned::now().with_time_zone(TimeZone::UTC);
         let next = schedule.next_after(&utc_now);
-        println!("NEXT AFTER for {} {:?}", expression, next);
+        println!("NEXT AFTER for {expression} {next:?}");
         assert!(next.is_some());
     }
 
@@ -748,9 +748,9 @@ mod test {
         assert!(next2.is_some());
         let next3 = upcoming.next();
         assert!(next3.is_some());
-        println!("Upcoming 1 for {} {:?}", expression, next1);
-        println!("Upcoming 2 for {} {:?}", expression, next2);
-        println!("Upcoming 3 for {} {:?}", expression, next3);
+        println!("Upcoming 1 for {expression} {next1:?}");
+        println!("Upcoming 2 for {expression} {next2:?}");
+        println!("Upcoming 3 for {expression} {next3:?}");
     }
 
     #[test]
@@ -764,9 +764,9 @@ mod test {
         assert!(next2.is_some());
         let next3 = upcoming.next();
         assert!(next3.is_some());
-        println!("Upcoming 1 for {} {:?}", expression, next1);
-        println!("Upcoming 2 for {} {:?}", expression, next2);
-        println!("Upcoming 3 for {} {:?}", expression, next3);
+        println!("Upcoming 1 for {expression} {next1:?}");
+        println!("Upcoming 2 for {expression} {next2:?}");
+        println!("Upcoming 3 for {expression} {next3:?}");
     }
 
     #[test]
@@ -780,9 +780,9 @@ mod test {
         assert!(prev2.is_some());
         let prev3 = upcoming.next();
         assert!(prev3.is_some());
-        println!("Prev Upcoming 1 for {} {:?}", expression, prev1);
-        println!("Prev Upcoming 2 for {} {:?}", expression, prev2);
-        println!("Prev Upcoming 3 for {} {:?}", expression, prev3);
+        println!("Prev Upcoming 1 for {expression} {prev1:?}");
+        println!("Prev Upcoming 2 for {expression} {prev2:?}");
+        println!("Prev Upcoming 3 for {expression} {prev3:?}");
     }
 
     #[test]
@@ -796,9 +796,9 @@ mod test {
         assert!(prev2.is_some());
         let prev3 = upcoming.next();
         assert!(prev3.is_some());
-        println!("Prev Upcoming 1 for {} {:?}", expression, prev1);
-        println!("Prev Upcoming 2 for {} {:?}", expression, prev2);
-        println!("Prev Upcoming 3 for {} {:?}", expression, prev3);
+        println!("Prev Upcoming 1 for {expression} {prev1:?}");
+        println!("Prev Upcoming 2 for {expression} {prev2:?}");
+        println!("Prev Upcoming 3 for {expression} {prev3:?}");
     }
 
     #[test]
@@ -812,9 +812,9 @@ mod test {
         assert!(next2.is_some());
         let next3 = upcoming.next();
         assert!(next3.is_some());
-        println!("Upcoming 1 for {} {:?}", expression, next1);
-        println!("Upcoming 2 for {} {:?}", expression, next2);
-        println!("Upcoming 3 for {} {:?}", expression, next3);
+        println!("Upcoming 1 for {expression} {next1:?}");
+        println!("Upcoming 2 for {expression} {next2:?}");
+        println!("Upcoming 3 for {expression} {next3:?}");
     }
 
     #[test]
@@ -831,7 +831,7 @@ mod test {
         let expression = "@monthly";
         let schedule = Schedule::from_str(expression).unwrap();
         let mut result = String::new();
-        write!(result, "{}", schedule).unwrap();
+        write!(result, "{schedule}").unwrap();
         assert_eq!(expression, result);
     }
 

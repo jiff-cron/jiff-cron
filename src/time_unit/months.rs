@@ -45,7 +45,7 @@ impl TimeUnitField for Months {
             "dec" | "december" => 12,
             _ => {
                 return Err(
-                    ErrorKind::Expression(format!("'{}' is not a valid month name.", name)).into(),
+                    ErrorKind::Expression(format!("'{name}' is not a valid month name.")).into(),
                 )
             }
         };
