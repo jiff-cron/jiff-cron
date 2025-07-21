@@ -12,9 +12,9 @@ mod tests {
     fn test_readme() {
         let expression = "0   30   9,12,15     1,15       May-Aug  Mon,Wed,Fri  2018/2";
         let schedule = Schedule::from_str(expression).unwrap();
-        println!("README: Upcoming fire times for '{}':", expression);
+        println!("README: Upcoming fire times for '{expression}':");
         for datetime in schedule.upcoming(TimeZone::UTC).take(10) {
-            println!("README: -> {}", datetime);
+            println!("README: -> {datetime}");
         }
     }
 
@@ -22,9 +22,9 @@ mod tests {
     fn test_anything_goes() {
         let expression = "* * * * * * *";
         let schedule = Schedule::from_str(expression).unwrap();
-        println!("All stars: Upcoming fire times for '{}':", expression);
+        println!("All stars: Upcoming fire times for '{expression}':");
         for datetime in schedule.upcoming(TimeZone::UTC).take(10) {
-            println!("All stars: -> {}", datetime);
+            println!("All stars: -> {datetime}");
         }
     }
 
@@ -45,10 +45,10 @@ mod tests {
         let expression = "1 2,17,51 1-3,6,9-11 4,29 2,3,7 Tues";
         let schedule = Schedule::from_str(expression).unwrap();
         let mut date = Zoned::now().with_time_zone(TimeZone::UTC);
-        println!("Fire times for {}:", expression);
+        println!("Fire times for {expression}:");
         for _ in 0..20 {
             date = schedule.after(&date).next().expect("No further dates!");
-            println!("-> {}", date);
+            println!("-> {date}");
         }
     }
 
@@ -56,9 +56,9 @@ mod tests {
     fn test_upcoming_iterator() {
         let expression = "0 2,17,51 1-3,6,9-11 4,29 2,3,7 Wed";
         let schedule = Schedule::from_str(expression).unwrap();
-        println!("Upcoming fire times for '{}':", expression);
+        println!("Upcoming fire times for '{expression}':");
         for datetime in schedule.upcoming(TimeZone::UTC).take(12) {
-            println!("-> {}", datetime);
+            println!("-> {datetime}");
         }
     }
 
@@ -88,7 +88,7 @@ mod tests {
             .upcoming(TimeZone::UTC)
             .next()
             .expect("There was no upcoming fire time.");
-        println!("Next fire time: {}", next);
+        println!("Next fire time: {next}");
     }
 
     #[test]
@@ -99,7 +99,7 @@ mod tests {
             .upcoming(TimeZone::UTC)
             .next_back()
             .expect("There was no previous upcoming fire time.");
-        println!("Previous fire time: {}", prev);
+        println!("Previous fire time: {prev}");
     }
 
     #[test]

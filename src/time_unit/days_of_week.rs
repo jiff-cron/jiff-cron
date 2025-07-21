@@ -40,8 +40,7 @@ impl TimeUnitField for DaysOfWeek {
             "sat" | "saturday" => 7,
             _ => {
                 return Err(ErrorKind::Expression(format!(
-                    "'{}' is not a valid day of the week.",
-                    name
+                    "'{name}' is not a valid day of the week."
                 ))
                 .into())
             }
