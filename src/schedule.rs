@@ -641,6 +641,8 @@ mod test {
     #[cfg(feature = "serde")]
     #[test]
     fn test_ser_de_schedule_shorthand() {
+        use jiff::civil::date;
+
         let serialized = postcard::to_stdvec(&Schedule::try_from("@hourly").expect("valid format"))
             .expect("serializable schedule");
 
@@ -672,6 +674,8 @@ mod test {
     #[cfg(feature = "serde")]
     #[test]
     fn test_ser_de_schedule_period_values_range() {
+        use jiff::civil::date;
+
         let serialized =
             postcard::to_stdvec(&Schedule::try_from("0 0 0 1-31/10 * ?").expect("valid format"))
                 .expect("serializable schedule");
