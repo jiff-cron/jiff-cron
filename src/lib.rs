@@ -51,7 +51,6 @@ pub mod error;
 
 mod ordinal;
 mod parsing;
-mod queries;
 mod schedule;
 mod specifier;
 mod time_unit;
