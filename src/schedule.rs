@@ -1,16 +1,15 @@
 use std::{
     fmt::{Display, Formatter, Result as FmtResult},
-    ops::Bound::{Included, Unbounded},
 };
 
-use jiff::{civil::date, tz::TimeZone, Zoned};
+use jiff::{tz::TimeZone, RoundMode, ToSpan as _, Unit, Zoned, ZonedRound};
 #[cfg(feature = "serde")]
 use serde::{
     de::{self, Visitor},
     Deserialize, Serialize, Serializer,
 };
 
-use crate::{ordinal::*, queries::*, time_unit::*};
+use crate::{ordinal::*, time_unit::*};
 
 impl From<Schedule> for String {
     fn from(schedule: Schedule) -> String {
@@ -29,231 +28,296 @@ impl Schedule {
         Schedule { source, fields }
     }
 
+    // Get the set of ordinals for the given unit.
+    fn ordinals(&self, unit: Unit) -> Option<&OrdinalSet> {
+        Some(match unit {
+            Unit::Second => self.fields.seconds.ordinals(),
+            Unit::Minute => self.fields.minutes.ordinals(),
+            Unit::Hour => self.fields.hours.ordinals(),
+            Unit::Day => self.fields.days_of_month.ordinals(),
+            Unit::Month => self.fields.months.ordinals(),
+            Unit::Year => self.fields.years.ordinals(),
+            _ => return None,
+        })
+    }
+
+    // Get the current value for the corresponding unit in the given timestamp with associated
+    // timezone.
+    fn current(zoned: &Zoned, unit: Unit) -> Option<u32> {
+        Some(match unit {
+            Unit::Second => zoned.second() as u32,
+            Unit::Minute => zoned.minute() as u32,
+            Unit::Hour => zoned.hour() as u32,
+            Unit::Day => zoned.day() as u32,
+            Unit::Month => zoned.month() as u32,
+            Unit::Year => zoned.year() as u32,
+            _ => return None,
+        })
+    }
+
+    fn adjust_next(&self, mut zoned: Zoned, unit: Unit) -> Option<Zoned> {
+        let ordinals = self.ordinals(unit)?;
+        let current = Self::current(&zoned, unit)?;
+
+        // Determine the next ordinal to use for the given unit and timestamp.
+        let interval = ordinals
+            .range(current + 1..)
+            .next()
+            .filter(|next| match unit {
+                Unit::Day => **next <= zoned.days_in_month() as u32,
+                _ => true,
+            })
+            .map(|next| (next - current) as i32)?;
+
+        // Calculate the span we have to add to the timestamp.
+        let interval = match unit {
+            Unit::Second => interval.seconds(),
+            Unit::Minute => interval.minutes(),
+            Unit::Hour => interval.hours(),
+            Unit::Day => interval.days(),
+            Unit::Month => interval.months(),
+            Unit::Year => interval.years(),
+            _ => return None,
+        };
+
+        zoned = zoned.checked_add(interval).ok()?;
+
+        Some(zoned)
+    }
+
+    fn adjust_prev(&self, mut zoned: Zoned, unit: Unit) -> Option<Zoned> {
+        let ordinals = self.ordinals(unit)?;
+        let current = Self::current(&zoned, unit)?;
+
+        // Determine the next ordinal to use for the given unit and timestamp.
+        let interval = ordinals
+            .range(..current)
+            .next_back()
+            .map(|prev| (current - prev) as i32)?;
+
+        // Calculate the span we have to subtract from the timestamp.
+        let interval = match unit {
+            Unit::Second => interval.seconds(),
+            Unit::Minute => interval.minutes(),
+            Unit::Hour => interval.hours(),
+            Unit::Day => interval.days(),
+            Unit::Month => interval.months(),
+            Unit::Year => interval.years(),
+            _ => return None,
+        };
+
+        zoned = zoned.checked_sub(interval).ok()?;
+
+        Some(zoned)
+    }
+
+    fn reset_next(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
+        // Pick the first available ordinal for the given unit.
+        let ordinals = self.ordinals(unit)?;
+        let first = *ordinals.first()?;
+
+        // Simply replace the value of the corresponding unit.
+        Some(match unit {
+            Unit::Second => zoned.with().second(first as i8).build().ok()?,
+            Unit::Minute => zoned.with().minute(first as i8).build().ok()?,
+            Unit::Hour => zoned.with().hour(first as i8).build().ok()?,
+            Unit::Day => zoned.with().day(first as i8).build().ok()?,
+            Unit::Month => zoned.with().month(first as i8).build().ok()?,
+            Unit::Year => zoned.with().year(first as i16).build().ok()?,
+            _ => return None,
+        })
+    }
+
+    fn reset_prev(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
+        // Pick the last available ordinal for the given unit. Ensure that if we are working with
+        // days, that we do not pick ordinals greater than the number of days in the current month.
+        let ordinals = self.ordinals(unit)?;
+
+        let last = *ordinals.iter().rev().find(|next| match unit {
+            Unit::Day => **next <= zoned.days_in_month() as u32,
+            _ => true,
+        })?;
+
+        // Simply replace the value of the corresponding unit.
+        Some(match unit {
+            Unit::Second => zoned.with().second(last as i8).build().ok()?,
+            Unit::Minute => zoned.with().minute(last as i8).build().ok()?,
+            Unit::Hour => zoned.with().hour(last as i8).build().ok()?,
+            Unit::Day => zoned.with().day(last as i8).build().ok()?,
+            Unit::Month => zoned.with().month(last as i8).build().ok()?,
+            Unit::Year => zoned.with().year(last as i16).build().ok()?,
+            _ => return None,
+        })
+    }
+
     fn next_after(&self, after: &Zoned) -> Option<Zoned> {
-        let mut query = NextAfterQuery::from(after);
-        for year in self
-            .fields
-            .years
-            .ordinals()
-            .range((Included(query.year_lower_bound()), Unbounded))
-            .cloned()
-        {
-            // It's a future year, the current year's range is irrelevant.
-            if year > after.year() as u32 {
-                query.reset_month();
-                query.reset_day_of_month();
+        let units = [
+            Unit::Second,
+            Unit::Minute,
+            Unit::Hour,
+            Unit::Day,
+            Unit::Month,
+            Unit::Year,
+        ];
+        let mut candidate = after.clone();
+
+        // First try rounding up the candidate to the nearest second.
+        let rounded = candidate
+            .round(
+                ZonedRound::new()
+                    .smallest(Unit::Second)
+                    .mode(RoundMode::Ceil),
+            )
+            .ok()?;
+
+        // If all fields have valid ordinals, return the rounded timestamp.
+        if rounded != candidate {
+            let mut valid = true;
+
+            for unit in &units {
+                let unit = *unit;
+                let ordinals = self.ordinals(unit)?;
+                let current = Self::current(&rounded, unit)?;
+
+                valid &= ordinals.contains(&current);
             }
-            let month_start = query.month_lower_bound();
-            if !self.fields.months.ordinals().contains(&month_start) {
-                query.reset_month();
+
+            if valid {
+                return Some(rounded);
             }
-            let month_range = (Included(month_start), Included(Months::inclusive_max()));
-            for month in self.fields.months.ordinals().range(month_range).cloned() {
-                let day_of_month_start = query.day_of_month_lower_bound();
-                if !self
-                    .fields
-                    .days_of_month
-                    .ordinals()
-                    .contains(&day_of_month_start)
-                {
-                    query.reset_day_of_month();
-                }
-                let day_of_month_end = days_in_month(month, year);
-                let day_of_month_range = (
-                    Included(day_of_month_start.min(day_of_month_end)),
-                    Included(day_of_month_end),
-                );
-
-                'day_loop: for day_of_month in self
-                    .fields
-                    .days_of_month
-                    .ordinals()
-                    .range(day_of_month_range)
-                    .cloned()
-                {
-                    let hour_start = query.hour_lower_bound();
-                    if !self.fields.hours.ordinals().contains(&hour_start) {
-                        query.reset_hour();
-                    }
-                    let hour_range = (Included(hour_start), Included(Hours::inclusive_max()));
-
-                    for hour in self.fields.hours.ordinals().range(hour_range).cloned() {
-                        let minute_start = query.minute_lower_bound();
-                        if !self.fields.minutes.ordinals().contains(&minute_start) {
-                            query.reset_minute();
-                        }
-                        let minute_range =
-                            (Included(minute_start), Included(Minutes::inclusive_max()));
-
-                        for minute in self.fields.minutes.ordinals().range(minute_range).cloned() {
-                            let second_start = query.second_lower_bound();
-                            if !self.fields.seconds.ordinals().contains(&second_start) {
-                                query.reset_second();
-                            }
-                            let second_range =
-                                (Included(second_start), Included(Seconds::inclusive_max()));
-
-                            for second in
-                                self.fields.seconds.ordinals().range(second_range).cloned()
-                            {
-                                let time_zone = after.time_zone().clone();
-                                let candidate = date(year as i16, month as i8, day_of_month as i8)
-                                    .at(hour as i8, minute as i8, second as i8, 0)
-                                    .to_zoned(time_zone);
-                                let candidate = if let Ok(candidate) = candidate {
-                                    candidate
-                                } else {
-                                    continue;
-                                };
-                                if !self
-                                    .fields
-                                    .days_of_week
-                                    .ordinals()
-                                    .contains(&(candidate.weekday().to_sunday_one_offset() as u32))
-                                {
-                                    continue 'day_loop;
-                                }
-                                return Some(candidate);
-                            }
-                            query.reset_minute();
-                        } // End of minutes range
-                        query.reset_hour();
-                    } // End of hours range
-                    query.reset_day_of_month();
-                } // End of Day of Month range
-                query.reset_month();
-            } // End of Month range
         }
 
-        // We ran out of dates to try.
-        None
+        candidate = rounded;
+
+        loop {
+            'outer: for (i, unit) in units.iter().enumerate() {
+                // Determine the smallest possible unit for which we can simply pick the next
+                // ordinal without wrapping around.
+                let Some(new_candidate) = self.adjust_next(candidate.clone(), *unit) else {
+                    continue;
+                };
+
+                // Check if all larger units have valid ordinals. Otherwise we have to try the next
+                // smallest possible unit.
+                for unit in &units[i..] {
+                    let ordinals = self.ordinals(*unit)?;
+                    let current = Self::current(&new_candidate, *unit)?;
+
+                    if !ordinals.contains(&current) {
+                        continue 'outer;
+                    }
+                }
+
+                // At this point we found a suitable candidate for which we have to reset the
+                // values corresponding to the units smaller than the unit we found. We simply pick
+                // the smallest possible ordinal for each.
+                candidate = new_candidate;
+
+                for unit in units[..i].iter().rev() {
+                    candidate = self.reset_next(candidate, *unit)?;
+                }
+
+                break;
+            }
+
+            // Keep going until the weekday is valid for this schedule.
+            if !self
+                .fields
+                .days_of_week
+                .ordinals()
+                .contains(&(candidate.weekday().to_sunday_one_offset() as u32))
+            {
+                continue;
+            }
+
+            // This is the next possible candidate that adheres to the schedule.
+            return Some(candidate);
+        }
     }
 
     fn prev_from(&self, before: &Zoned) -> Option<Zoned> {
-        let mut query = PrevFromQuery::from(before);
-        for year in self
-            .fields
-            .years
-            .ordinals()
-            .range((Unbounded, Included(query.year_upper_bound())))
-            .rev()
-            .cloned()
-        {
-            let month_start = query.month_upper_bound();
+        let units = [
+            Unit::Second,
+            Unit::Minute,
+            Unit::Hour,
+            Unit::Day,
+            Unit::Month,
+            Unit::Year,
+        ];
+        let mut candidate = before.clone();
 
-            if !self.fields.months.ordinals().contains(&month_start) {
-                query.reset_month();
+        // First try rounding up the candidate to the nearest second.
+        let rounded = candidate
+            .round(
+                ZonedRound::new()
+                    .smallest(Unit::Second)
+                    .mode(RoundMode::Floor),
+            )
+            .ok()?;
+
+        // If all fields have valid ordinals, return the rounded timestamp.
+        if rounded != candidate {
+            let mut valid = true;
+
+            for unit in &units {
+                let unit = *unit;
+                let ordinals = self.ordinals(unit)?;
+                let current = Self::current(&rounded, unit)?;
+
+                valid &= ordinals.contains(&current);
             }
-            let month_range = (Included(Months::inclusive_min()), Included(month_start));
 
-            for month in self
-                .fields
-                .months
-                .ordinals()
-                .range(month_range)
-                .rev()
-                .cloned()
-            {
-                let day_of_month_end = query.day_of_month_upper_bound();
-                if !self
-                    .fields
-                    .days_of_month
-                    .ordinals()
-                    .contains(&day_of_month_end)
-                {
-                    query.reset_day_of_month();
-                }
-
-                let day_of_month_end = days_in_month(month, year).min(day_of_month_end);
-
-                let day_of_month_range = (
-                    Included(DaysOfMonth::inclusive_min()),
-                    Included(day_of_month_end),
-                );
-
-                'day_loop: for day_of_month in self
-                    .fields
-                    .days_of_month
-                    .ordinals()
-                    .range(day_of_month_range)
-                    .rev()
-                    .cloned()
-                {
-                    let hour_start = query.hour_upper_bound();
-                    if !self.fields.hours.ordinals().contains(&hour_start) {
-                        query.reset_hour();
-                    }
-                    let hour_range = (Included(Hours::inclusive_min()), Included(hour_start));
-
-                    for hour in self
-                        .fields
-                        .hours
-                        .ordinals()
-                        .range(hour_range)
-                        .rev()
-                        .cloned()
-                    {
-                        let minute_start = query.minute_upper_bound();
-                        if !self.fields.minutes.ordinals().contains(&minute_start) {
-                            query.reset_minute();
-                        }
-                        let minute_range =
-                            (Included(Minutes::inclusive_min()), Included(minute_start));
-
-                        for minute in self
-                            .fields
-                            .minutes
-                            .ordinals()
-                            .range(minute_range)
-                            .rev()
-                            .cloned()
-                        {
-                            let second_start = query.second_upper_bound();
-                            if !self.fields.seconds.ordinals().contains(&second_start) {
-                                query.reset_second();
-                            }
-                            let second_range =
-                                (Included(Seconds::inclusive_min()), Included(second_start));
-
-                            for second in self
-                                .fields
-                                .seconds
-                                .ordinals()
-                                .range(second_range)
-                                .rev()
-                                .cloned()
-                            {
-                                let time_zone = before.time_zone().clone();
-                                let candidate = date(year as i16, month as i8, day_of_month as i8)
-                                    .at(hour as i8, minute as i8, second as i8, 0)
-                                    .to_zoned(time_zone);
-                                let candidate = if let Ok(candidate) = candidate {
-                                    candidate
-                                } else {
-                                    continue;
-                                };
-                                if !self
-                                    .fields
-                                    .days_of_week
-                                    .ordinals()
-                                    .contains(&(candidate.weekday().to_sunday_one_offset() as u32))
-                                {
-                                    continue 'day_loop;
-                                }
-                                return Some(candidate);
-                            }
-                            query.reset_minute();
-                        } // End of minutes range
-                        query.reset_hour();
-                    } // End of hours range
-                    query.reset_day_of_month();
-                } // End of Day of Month range
-                query.reset_month();
-            } // End of Month range
+            if valid {
+                return Some(rounded);
+            }
         }
 
-        // We ran out of dates to try.
-        None
+        candidate = rounded;
+
+        loop {
+            'outer: for (i, unit) in units.iter().enumerate() {
+                // Determine the smallest possible unit for which we can simply pick the next
+                // ordinal without wrapping around.
+                let Some(new_candidate) = self.adjust_prev(candidate.clone(), *unit) else {
+                    continue;
+                };
+
+                // Check if all larger units have valid ordinals. Otherwise we have to try the next
+                // smallest possible unit.
+                for unit in &units[i..] {
+                    let ordinals = self.ordinals(*unit)?;
+                    let current = Self::current(&new_candidate, *unit)?;
+
+                    if !ordinals.contains(&current) {
+                        continue 'outer;
+                    }
+                }
+
+                // At this point we found a suitable candidate for which we have to reset the
+                // values corresponding to the units smaller than the unit we found. We simply pick
+                // the greatest possible ordinal for each.
+                candidate = new_candidate;
+
+                for unit in units[..i].iter().rev() {
+                    candidate = self.reset_prev(candidate, *unit)?;
+                }
+
+                break;
+            }
+
+            // Keep going until the weekday is valid for this schedule.
+            if !self
+                .fields
+                .days_of_week
+                .ordinals()
+                .contains(&(candidate.weekday().to_sunday_one_offset() as u32))
+            {
+                continue;
+            }
+
+            // This is the next possible candidate that adheres to the schedule.
+            return Some(candidate);
+        }
     }
 
     /// Provides an iterator which will return each [`jiff::Zoned`] that matches
@@ -479,23 +543,6 @@ impl DoubleEndedIterator for OwnedScheduleIterator {
     }
 }
 
-fn is_leap_year(year: Ordinal) -> bool {
-    let by_four = year % 4 == 0;
-    let by_hundred = year % 100 == 0;
-    let by_four_hundred = year % 400 == 0;
-    by_four && ((!by_hundred) || by_four_hundred)
-}
-
-fn days_in_month(month: Ordinal, year: Ordinal) -> u32 {
-    let is_leap_year = is_leap_year(year);
-    match month {
-        9 | 4 | 6 | 11 => 30,
-        2 if is_leap_year => 29,
-        2 => 28,
-        _ => 31,
-    }
-}
-
 #[cfg(feature = "serde")]
 struct ScheduleVisitor;
 
@@ -703,7 +750,7 @@ mod test {
     #[test]
     fn test_next_after_past_date_next_year() {
         // Schedule after 2021-10-27
-        let starting_point = date(2021, 10, 27)
+        let starting_point = jiff::civil::date(2021, 10, 27)
             .at(0, 0, 0, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
@@ -916,5 +963,54 @@ mod test {
 
         // But schedules yielding different events are not equal.
         assert_ne!(schedule_4, schedule_6);
+    }
+
+    #[test]
+    fn test_dst_ambiguous_time_after() {
+        let schedule_tz = TimeZone::get("America/Chicago").unwrap();
+        let dt = DateTime::new(2022, 11, 5, 23, 30, 0, 0)
+            .unwrap()
+            .to_zoned(schedule_tz)
+            .unwrap();
+        let schedule = Schedule::from_str("0 0 * * * * *").unwrap();
+        let times = schedule
+            .after(&dt)
+            .map(|x| x.to_string())
+            .take(5)
+            .collect::<Vec<_>>();
+        let expected_times = [
+            "2022-11-06T00:00:00-05:00[America/Chicago]".to_string(),
+            "2022-11-06T01:00:00-05:00[America/Chicago]".to_string(),
+            "2022-11-06T01:00:00-06:00[America/Chicago]".to_string(), // 1 AM happens again
+            "2022-11-06T02:00:00-06:00[America/Chicago]".to_string(),
+            "2022-11-06T03:00:00-06:00[America/Chicago]".to_string(),
+        ];
+
+        assert_eq!(times.as_slice(), expected_times.as_slice());
+    }
+
+    #[test]
+    fn test_dst_ambiguous_time_before() {
+        let schedule_tz = TimeZone::get("America/Chicago").unwrap();
+        let dt = DateTime::new(2022, 11, 6, 3, 30, 0, 0)
+            .unwrap()
+            .to_zoned(schedule_tz)
+            .unwrap();
+        let schedule = Schedule::from_str("0 0 * * * * *").unwrap();
+        let times = schedule
+            .after(&dt)
+            .map(|x| x.to_string())
+            .rev()
+            .take(5)
+            .collect::<Vec<_>>();
+        let expected_times = [
+            "2022-11-06T03:00:00-06:00[America/Chicago]".to_string(),
+            "2022-11-06T02:00:00-06:00[America/Chicago]".to_string(),
+            "2022-11-06T01:00:00-06:00[America/Chicago]".to_string(),
+            "2022-11-06T01:00:00-05:00[America/Chicago]".to_string(), // 1 AM happens again
+            "2022-11-06T00:00:00-05:00[America/Chicago]".to_string(),
+        ];
+
+        assert_eq!(times.as_slice(), expected_times.as_slice());
     }
 }
