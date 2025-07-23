@@ -1,6 +1,4 @@
-use std::{
-    fmt::{Display, Formatter, Result as FmtResult},
-};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 use jiff::{tz::TimeZone, RoundMode, ToSpan as _, Unit, Zoned, ZonedRound};
 #[cfg(feature = "serde")]
@@ -41,8 +39,8 @@ impl Schedule {
         })
     }
 
-    // Get the current value for the corresponding unit in the given timestamp with associated
-    // timezone.
+    // Get the current value for the corresponding unit in the given timestamp with
+    // associated timezone.
     fn current(zoned: &Zoned, unit: Unit) -> Option<u32> {
         Some(match unit {
             Unit::Second => zoned.second() as u32,
@@ -129,8 +127,9 @@ impl Schedule {
     }
 
     fn reset_prev(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
-        // Pick the last available ordinal for the given unit. Ensure that if we are working with
-        // days, that we do not pick ordinals greater than the number of days in the current month.
+        // Pick the last available ordinal for the given unit. Ensure that if we are
+        // working with days, that we do not pick ordinals greater than the
+        // number of days in the current month.
         let ordinals = self.ordinals(unit)?;
 
         let last = *ordinals.iter().rev().find(|next| match unit {
@@ -197,8 +196,8 @@ impl Schedule {
                     continue;
                 };
 
-                // Check if all larger units have valid ordinals. Otherwise we have to try the next
-                // smallest possible unit.
+                // Check if all larger units have valid ordinals. Otherwise we have to try the
+                // next smallest possible unit.
                 for unit in &units[i..] {
                     let ordinals = self.ordinals(*unit)?;
                     let current = Self::current(&new_candidate, *unit)?;
@@ -209,8 +208,8 @@ impl Schedule {
                 }
 
                 // At this point we found a suitable candidate for which we have to reset the
-                // values corresponding to the units smaller than the unit we found. We simply pick
-                // the smallest possible ordinal for each.
+                // values corresponding to the units smaller than the unit we found. We simply
+                // pick the smallest possible ordinal for each.
                 candidate = new_candidate;
 
                 for unit in units[..i].iter().rev() {
@@ -282,8 +281,8 @@ impl Schedule {
                     continue;
                 };
 
-                // Check if all larger units have valid ordinals. Otherwise we have to try the next
-                // smallest possible unit.
+                // Check if all larger units have valid ordinals. Otherwise we have to try the
+                // next smallest possible unit.
                 for unit in &units[i..] {
                     let ordinals = self.ordinals(*unit)?;
                     let current = Self::current(&new_candidate, *unit)?;
@@ -294,8 +293,8 @@ impl Schedule {
                 }
 
                 // At this point we found a suitable candidate for which we have to reset the
-                // values corresponding to the units smaller than the unit we found. We simply pick
-                // the greatest possible ordinal for each.
+                // values corresponding to the units smaller than the unit we found. We simply
+                // pick the greatest possible ordinal for each.
                 candidate = new_candidate;
 
                 for unit in units[..i].iter().rev() {
