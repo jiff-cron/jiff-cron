@@ -1,9 +1,9 @@
 #![deny(rust_2018_idioms)]
 #![deny(rustdoc::broken_intra_doc_links)]
 #![allow(clippy::needless_doctest_main)]
-//! A cron expression parser and schedule explorer built with jiff.
+//! A cron expression parser and schedule explorer built with `jiff`.
 //!
-//! # Example
+//! # Examples
 //!
 //! ```rust
 //! use std::str::FromStr;
@@ -21,17 +21,58 @@
 //! }
 //!
 //! /*
+//!
 //! Upcoming fire times:
-//! -> 2018-06-01 09:30:00 UTC
-//! -> 2018-06-01 12:30:00 UTC
-//! -> 2018-06-01 15:30:00 UTC
-//! -> 2018-06-15 09:30:00 UTC
-//! -> 2018-06-15 12:30:00 UTC
-//! -> 2018-06-15 15:30:00 UTC
-//! -> 2018-08-01 09:30:00 UTC
-//! -> 2018-08-01 12:30:00 UTC
-//! -> 2018-08-01 15:30:00 UTC
-//! -> 2018-08-15 09:30:00 UTC
+//!
+//! → 2018-06-01T09:30:00+00:00[UTC]
+//! → 2018-06-01T12:30:00+00:00[UTC]
+//! → 2018-06-01T15:30:00+00:00[UTC]
+//! → 2018-06-15T09:30:00+00:00[UTC]
+//! → 2018-06-15T12:30:00+00:00[UTC]
+//! → 2018-06-15T15:30:00+00:00[UTC]
+//! → 2018-08-01T09:30:00+00:00[UTC]
+//! → 2018-08-01T12:30:00+00:00[UTC]
+//! → 2018-08-01T15:30:00+00:00[UTC]
+//! → 2018-08-15T09:30:00+00:00[UTC]
+//!
+//! */
+//! ```
+//!
+//! ## DST behavior
+//!
+//! `jiff` also handles daylight savings gaps and folding appropriately:
+//!
+//! ```rust
+//! use std::str::FromStr;
+//!
+//! use jiff_cron::{
+//!     jiff::{civil::date, tz::TimeZone},
+//!     Schedule,
+//! };
+//!
+//! fn main() {
+//!     let expression = "0 0 * * * * *";
+//!     let schedule = Schedule::from_str(expression).unwrap();
+//!     let after_datetime = date(2022, 11, 5)
+//!         .at(23, 30, 0, 0)
+//!         .in_tz("America/Chicago")
+//!         .unwrap();
+//!     println!("Upcoming fire times:");
+//!     for datetime in schedule.after(&after_datetime).take(5) {
+//!         println!("-> {}", datetime);
+//!     }
+//! }
+//!
+//! /*
+//!
+//! Upcoming fire times:
+//!
+//! → 2022-11-06T00:00:00-05:00[America/Chicago]
+//! → 2022-11-06T01:00:00-05:00[America/Chicago]
+//! → 2022-11-06T01:00:00-06:00[America/Chicago]
+//! → 2022-11-06T02:00:00-06:00[America/Chicago]
+//! → 2022-11-06T03:00:00-06:00[America/Chicago]
+//!
 //! */
 //! ```
 //!
