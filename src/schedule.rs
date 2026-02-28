@@ -456,6 +456,7 @@ impl ScheduleFields {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct ScheduleIterator<'a> {
     schedule: &'a Schedule,
     previous_datetime: Option<Zoned>,
@@ -500,6 +501,7 @@ impl DoubleEndedIterator for ScheduleIterator<'_> {
 }
 
 /// A `ScheduleIterator` with a static lifetime.
+#[derive(Clone, Debug)]
 pub struct OwnedScheduleIterator {
     schedule: Schedule,
     previous_datetime: Option<Zoned>,

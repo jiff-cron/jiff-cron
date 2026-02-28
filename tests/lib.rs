@@ -63,6 +63,17 @@ mod tests {
     }
 
     #[test]
+    fn test_upcoming_owned_iterator() {
+        let expression = "0 2,17,51 1-3,6,9-11 4,29 2,3,7 Wed";
+        let schedule = Schedule::from_str(expression).unwrap();
+        let upcoming_owned_iter = schedule.upcoming_owned(TimeZone::UTC);
+        println!("Upcoming fire times for '{expression}':");
+        for datetime in upcoming_owned_iter.clone().take(12) {
+            println!("-> {datetime}");
+        }
+    }
+
+    #[test]
     fn test_parse_without_year() {
         let expression = "1 2 3 4 5 6";
         assert!(Schedule::from_str(expression).is_ok());
