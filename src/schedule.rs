@@ -15,7 +15,7 @@ impl From<Schedule> for String {
     }
 }
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Eq, Debug)]
 pub struct Schedule {
     source: String,
     fields: ScheduleFields,
@@ -423,7 +423,7 @@ impl PartialEq for Schedule {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct ScheduleFields {
     years: Years,
     days_of_week: DaysOfWeek,

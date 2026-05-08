@@ -8,7 +8,7 @@ use crate::{
 
 static ALL: LazyLock<OrdinalSet> = LazyLock::new(Months::supported_ordinals);
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Eq, Debug)]
 pub struct Months {
     ordinals: Option<OrdinalSet>,
 }
