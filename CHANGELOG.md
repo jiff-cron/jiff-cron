@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update links to point to the `jiff-cron` GitHub organization (https://github.com/jiff-cron/jiff-cron/commit/1eff14a82e19a305d684044aa11e92500e4a6b43) by @maxcountryman
 - Re-implement next\_after/prev\_from logic to support jiff 0.2/DST (https://github.com/jiff-cron/jiff-cron/pull/31) by @StephanvanSchaik
 - Migrate from `nom` to `winnow` (https://github.com/jiff-cron/jiff-cron/pull/38) by @epage, with improvements by @AlexTMjugador, ported by @LeoniePhiline
+- Refactor month and day-of-week name parsing to use perfect hash function (`phf`) maps instead of match expressions, improving lookup performance and code maintainability. (https://github.com/jiff-cron/jiff-cron/pull/38) by @sbquinlan, ported by @LeoniePhiline
 
 ### Fixed
 

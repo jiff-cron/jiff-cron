@@ -16,6 +16,7 @@ edition = "2021"
 
 [dependencies]
 jiff = "0.2"
+phf = { version = "0.11", features = ["macros"] }
 serde = { version = "1", optional = true }
 winnow = { version = "1.0", default-features = false, features = ["ascii", "std"] }
 
