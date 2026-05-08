@@ -52,6 +52,90 @@ mod tests {
         }
     }
 
+    /// Leap year multi-year-skip regression test for <https://github.com/jiff-cron/jiff-cron/issues/41>.
+    ///
+    /// The non-deterministic `test_parse_with_lists`, using `Zoned::now`,
+    /// only succeeds in leap years before February 29th,
+    /// or in years before a leap year, after February 28th.
+    ///
+    /// This deterministic test asserts non-leap years being skipped
+    /// on a "Every February 29th" schedule.
+    ///
+    /// 2024 was a leap year. 2025, 2025 and 2027 are non leap years.
+    /// The next date for "Every February 29th" on 2026-01-01
+    /// must skip the non-existent 2026-02-29 and 2027-02-29,
+    /// and yield 2028-02-29.
+    #[test]
+    fn test_next_feb29_skips_non_leap_years() {
+        let schedule = Schedule::from_str("0 0 0 29 2 *").unwrap();
+        let start = jiff::civil::date(2026, 1, 1)
+            .at(0, 0, 0, 0)
+            .to_zoned(TimeZone::UTC)
+            .unwrap();
+        let next = schedule.after(&start).next().unwrap();
+        assert_eq!(
+            next,
+            jiff::civil::date(2028, 2, 29)
+                .at(0, 0, 0, 0)
+                .to_zoned(TimeZone::UTC)
+                .unwrap()
+        );
+    }
+
+    /// Leap year month-skip regression test for <https://github.com/jiff-cron/jiff-cron/issues/41>.
+    ///
+    /// The non-deterministic `test_parse_with_lists`, using `Zoned::now`,
+    /// only succeeds in leap years before February 29th,
+    /// or in years before a leap year, after February 28th.
+    ///
+    /// This deterministic test asserts the February of non-leap years being
+    /// skipped on a "Every February 29th and March 29th" schedule.
+    ///
+    /// 2024 was a leap year. 2025, 2025 and 2027 are non leap years.
+    /// The next date for "Every February 29th and March 29th" on 2026-01-01
+    /// must skip the non-existent 2026-02-09 and yield 2026-03-29.
+    #[test]
+    fn test_next_feb_or_mar29_skips_feb_in_non_leap_year() {
+        let schedule = Schedule::from_str("0 0 0 29 2,3 *").unwrap();
+        let start = jiff::civil::date(2026, 1, 1)
+            .at(0, 0, 0, 0)
+            .to_zoned(TimeZone::UTC)
+            .unwrap();
+        let next = schedule.after(&start).next().unwrap();
+        assert_eq!(
+            next,
+            jiff::civil::date(2026, 3, 29)
+                .at(0, 0, 0, 0)
+                .to_zoned(TimeZone::UTC)
+                .unwrap()
+        );
+    }
+
+    /// Leap year reverse multi-year-skip regression test for <https://github.com/jiff-cron/jiff-cron/issues/41>.
+    ///
+    /// This deterministic test asserts non-leap years being skipped
+    /// when iterating backwards on a "Every February 29th" schedule.
+    ///
+    /// 2024 was a leap year. 2025, 2025 and 2027 are non leap years.
+    /// The next reverse iteration date for "Every February 29th" on 2026-01-01
+    /// must skip the non-existent 2025-02-29 and yield 2028-02-29.
+    #[test]
+    fn test_prev_feb29_skips_non_leap_years() {
+        let schedule = Schedule::from_str("0 0 0 29 2 *").unwrap();
+        let start = jiff::civil::date(2026, 1, 1)
+            .at(0, 0, 0, 0)
+            .to_zoned(TimeZone::UTC)
+            .unwrap();
+        let prev = schedule.after(&start).next_back().unwrap();
+        assert_eq!(
+            prev,
+            jiff::civil::date(2024, 2, 29)
+                .at(0, 0, 0, 0)
+                .to_zoned(TimeZone::UTC)
+                .unwrap()
+        );
+    }
+
     #[test]
     fn test_upcoming_iterator() {
         let expression = "0 2,17,51 1-3,6,9-11 4,29 2,3,7 Wed";
