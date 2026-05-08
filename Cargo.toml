@@ -16,7 +16,7 @@ edition = "2021"
 
 [dependencies]
 jiff = "0.2"
-nom = "7"
+nom = "8"
 serde = {version = "1", optional = true }
 
 [dev-dependencies]
