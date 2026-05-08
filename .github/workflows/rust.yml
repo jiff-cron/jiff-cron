@@ -23,6 +23,12 @@ jobs:
       - name: rustfmt
         run: |
           cargo +nightly --locked fmt --all -- --check
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: keepsorted
+      - name: keepsorted
+        run: |
+          keepsorted -r -f rust_derive_canonical --diff .
 
   check-docs:
     runs-on: ubuntu-latest
