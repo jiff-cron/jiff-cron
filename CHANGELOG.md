@@ -29,10 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Document shared ownership (https://github.com/jiff-cron/jiff-cron/commit/e103e0219eb989fb8c8ac49efdebbe31d0654f83) by @LeoniePhiline
 - Declare broader dependency versions (https://github.com/jiff-cron/jiff-cron/pull/20) by @LeoniePhiline
 - Update links to point to the `jiff-cron` GitHub organization (https://github.com/jiff-cron/jiff-cron/commit/1eff14a82e19a305d684044aa11e92500e4a6b43) by @maxcountryman
+- Re-implement next\_after/prev\_from logic to support jiff 0.2/DST (https://github.com/jiff-cron/jiff-cron/pull/31) by @StephanvanSchaik
+- Migrate from `nom` to `winnow` (https://github.com/jiff-cron/jiff-cron/pull/38) by @epage, with improvements by @AlexTMjugador, ported by @LeoniePhiline
 
 ### Fixed
 
 - Avoid running CI workflows twice (https://github.com/jiff-cron/jiff-cron/commit/398054060fce88b92883e3875328ca18da9364ed) by @maxcountryman
+- Update `jiff` to 0.2 (https://github.com/jiff-cron/jiff-cron/pull/29) by @LeoniePhiline
 
 ## [0.1.1] - 2024-11-01
 
