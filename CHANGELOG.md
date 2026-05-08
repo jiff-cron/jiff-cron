@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Re-export `jiff` (https://github.com/jiff-cron/jiff-cron/commit/7504ab9727d55733096fd596b96d25bad9ddfd5c) by @LeoniePhiline
 - Insert dependency status badge (https://github.com/jiff-cron/jiff-cron/commit/36398ec995a8ed97940ed8592956a3bc3c469c99) by @LeoniePhiline
 - Keep a changelog and configure `cargo-release` (https://github.com/jiff-cron/jiff-cron/issues/6, https://github.com/jiff-cron/jiff-cron/pull/27) by @LeoniePhiline
+- Add `Debug` + `Clone` derives to `ScheduleIterator` and  `OwnedScheduleIterator` (https://github.com/jiff-cron/jiff-cron/pull/35) by @irithsharma
 
 ### Changed
 
