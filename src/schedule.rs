@@ -745,7 +745,7 @@ mod test {
         let prev2 = schedule.prev_from(
             &next2
                 .as_ref()
-                .map(|next2| next2.saturating_add(SignedDuration::from_millis(100)))
+                .map(|next2| next2.saturating_add(SignedDuration::from_nanos(100)))
                 .unwrap(),
         );
         println!("PREV2 FROM for {expression} {prev2:?}");
