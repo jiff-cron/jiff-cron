@@ -53,7 +53,7 @@ impl FromStr for Schedule {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct Field {
     pub specifiers: Vec<RootSpecifier>, // TODO: expose iterator?
 }
