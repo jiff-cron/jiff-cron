@@ -152,7 +152,7 @@ mod tests {
         let schedule = Schedule::from_str(expression).unwrap();
         let upcoming_owned_iter = schedule.upcoming_owned(TimeZone::UTC);
         println!("Upcoming fire times for '{expression}':");
-        for datetime in upcoming_owned_iter.clone().take(12) {
+        for datetime in upcoming_owned_iter.take(12) {
             println!("→ {datetime}");
         }
     }
@@ -581,7 +581,7 @@ mod tests {
         assert_eq!(
             date(2020, 9, 18)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
             schedule_iter.next().unwrap()
         );
@@ -620,7 +620,7 @@ mod tests {
                 .unwrap(),
             date(2020, 1, 1)
                 .at(0, 1, 34, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -652,7 +652,7 @@ mod tests {
                 .unwrap(),
             date(2022, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -684,7 +684,7 @@ mod tests {
                 .unwrap(),
             date(2020, 1, 2)
                 .at(12, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -728,7 +728,7 @@ mod tests {
                 .unwrap(),
             date(2020, 3, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -768,7 +768,7 @@ mod tests {
                 .unwrap(),
             date(2021, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -792,7 +792,7 @@ mod tests {
                 .unwrap(),
             date(2040, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -840,7 +840,7 @@ mod tests {
                 .unwrap(),
             date(2020, 1, 1)
                 .at(2, 42, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -872,7 +872,7 @@ mod tests {
                 .unwrap(),
             date(2022, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -902,7 +902,7 @@ mod tests {
             .unwrap();
         let not_included = date(2020, 1, 11)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned(schedule_tz)
             .unwrap();
         assert!(schedule.includes(included));
         assert!(!schedule.includes(not_included));
