@@ -27,35 +27,35 @@ impl Schedule {
     }
 
     // Get the set of ordinals for the given unit.
-    fn ordinals(&self, unit: Unit) -> Option<&OrdinalSet> {
-        Some(match unit {
+    fn ordinals(&self, unit: Unit) -> &OrdinalSet {
+        match unit {
             Unit::Second => self.fields.seconds.ordinals(),
             Unit::Minute => self.fields.minutes.ordinals(),
             Unit::Hour => self.fields.hours.ordinals(),
             Unit::Day => self.fields.days_of_month.ordinals(),
             Unit::Month => self.fields.months.ordinals(),
             Unit::Year => self.fields.years.ordinals(),
-            _ => return None,
-        })
+            _ => unreachable!(),
+        }
     }
 
     // Get the current value for the corresponding unit in the given timestamp with
     // associated timezone.
-    fn current(zoned: &Zoned, unit: Unit) -> Option<u32> {
-        Some(match unit {
+    fn current(zoned: &Zoned, unit: Unit) -> u32 {
+        match unit {
             Unit::Second => zoned.second() as u32,
             Unit::Minute => zoned.minute() as u32,
             Unit::Hour => zoned.hour() as u32,
             Unit::Day => zoned.day() as u32,
             Unit::Month => zoned.month() as u32,
             Unit::Year => zoned.year() as u32,
-            _ => return None,
-        })
+            _ => unreachable!(),
+        }
     }
 
     fn adjust_next(&self, mut zoned: Zoned, unit: Unit) -> Option<Zoned> {
-        let ordinals = self.ordinals(unit)?;
-        let current = Self::current(&zoned, unit)?;
+        let ordinals = self.ordinals(unit);
+        let current = Self::current(&zoned, unit);
 
         // Determine the next ordinal to use for the given unit and timestamp.
         let interval = ordinals
@@ -75,7 +75,7 @@ impl Schedule {
             Unit::Day => interval.days(),
             Unit::Month => interval.months(),
             Unit::Year => interval.years(),
-            _ => return None,
+            _ => unreachable!(),
         };
 
         zoned = zoned.checked_add(interval).ok()?;
@@ -84,8 +84,8 @@ impl Schedule {
     }
 
     fn adjust_prev(&self, mut zoned: Zoned, unit: Unit) -> Option<Zoned> {
-        let ordinals = self.ordinals(unit)?;
-        let current = Self::current(&zoned, unit)?;
+        let ordinals = self.ordinals(unit);
+        let current = Self::current(&zoned, unit);
 
         // Determine the previous ordinal to use for the given unit and timestamp.
         let interval = ordinals
@@ -101,7 +101,7 @@ impl Schedule {
             Unit::Day => interval.days(),
             Unit::Month => interval.months(),
             Unit::Year => interval.years(),
-            _ => return None,
+            _ => unreachable!(),
         };
 
         zoned = zoned.checked_sub(interval).ok()?;
@@ -110,19 +110,22 @@ impl Schedule {
     }
 
     fn reset_next(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
-        let ordinals = self.ordinals(unit)?;
+        let ordinals = self.ordinals(unit);
 
         // `Month` reset must jointly set `Day` to respect the days-in-month constraint.
         //
         // Iterate months in ascending order.
         // For each, find the first valid day ordinal.
         if let Unit::Month = unit {
-            let day_ordinals = self.ordinals(Unit::Day)?;
+            let day_ordinals = self.ordinals(Unit::Day);
 
             for &month_ordinal in ordinals.iter() {
-                let Ok(month) = zoned.with().month(month_ordinal as i8).day(1).build() else {
-                    continue;
-                };
+                let month = zoned
+                    .with()
+                    .month(month_ordinal as i8)
+                    .day(1)
+                    .build()
+                    .expect("month ordinals are constrained");
 
                 let days_in_month = month.days_in_month() as u32;
                 if let Some(&day_ordinal) = day_ordinals
@@ -149,25 +152,27 @@ impl Schedule {
             Unit::Minute => zoned.with().minute(first as i8).build().ok()?,
             Unit::Hour => zoned.with().hour(first as i8).build().ok()?,
             Unit::Day => zoned.with().day(first as i8).build().ok()?,
-            Unit::Year => zoned.with().year(first as i16).build().ok()?,
-            _ => return None,
+            _ => unreachable!(),
         })
     }
 
     fn reset_prev(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
-        let ordinals = self.ordinals(unit)?;
+        let ordinals = self.ordinals(unit);
 
         // `Month` reset must jointly set `Day` to respect the days-in-month constraint.
         //
         // Iterate months in descending order.
         // For each, find the last valid day ordinal.
         if let Unit::Month = unit {
-            let day_ordinals = self.ordinals(Unit::Day)?;
+            let day_ordinals = self.ordinals(Unit::Day);
 
             for &month_ordinal in ordinals.iter().rev() {
-                let Ok(month) = zoned.with().month(month_ordinal as i8).day(1).build() else {
-                    continue;
-                };
+                let month = zoned
+                    .with()
+                    .month(month_ordinal as i8)
+                    .day(1)
+                    .build()
+                    .expect("month ordinals are constrained");
 
                 let days_in_month = month.days_in_month() as u32;
                 if let Some(&day_ordinal) = day_ordinals
@@ -200,8 +205,7 @@ impl Schedule {
             Unit::Minute => zoned.with().minute(last as i8).build().ok()?,
             Unit::Hour => zoned.with().hour(last as i8).build().ok()?,
             Unit::Day => zoned.with().day(last as i8).build().ok()?,
-            Unit::Year => zoned.with().year(last as i16).build().ok()?,
-            _ => return None,
+            _ => unreachable!(),
         })
     }
 
@@ -231,8 +235,8 @@ impl Schedule {
 
             for unit in &units {
                 let unit = *unit;
-                let ordinals = self.ordinals(unit)?;
-                let current = Self::current(&candidate, unit)?;
+                let ordinals = self.ordinals(unit);
+                let current = Self::current(&candidate, unit);
 
                 valid &= ordinals.contains(&current);
             }
@@ -261,8 +265,8 @@ impl Schedule {
                 // Check if all larger units have valid ordinals.
                 // Otherwise we have to try the next smallest possible unit.
                 for unit in &units[i..] {
-                    let ordinals = self.ordinals(*unit)?;
-                    let current = Self::current(&adjusted_candidate, *unit)?;
+                    let ordinals = self.ordinals(*unit);
+                    let current = Self::current(&adjusted_candidate, *unit);
 
                     if !ordinals.contains(&current) {
                         continue 'units;
@@ -337,8 +341,8 @@ impl Schedule {
 
             for unit in &units {
                 let unit = *unit;
-                let ordinals = self.ordinals(unit)?;
-                let current = Self::current(&candidate, unit)?;
+                let ordinals = self.ordinals(unit);
+                let current = Self::current(&candidate, unit);
 
                 valid &= ordinals.contains(&current);
             }
@@ -367,8 +371,8 @@ impl Schedule {
                 // Check if all larger units have valid ordinals.
                 // Otherwise we have to try the next smallest possible unit.
                 for unit in &units[i..] {
-                    let ordinals = self.ordinals(*unit)?;
-                    let current = Self::current(&adjusted_candidate, *unit)?;
+                    let ordinals = self.ordinals(*unit);
+                    let current = Self::current(&adjusted_candidate, *unit);
 
                     if !ordinals.contains(&current) {
                         continue 'units;
