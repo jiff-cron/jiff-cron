@@ -284,7 +284,7 @@ where
         //println!("ordinals_from_specifier for {} => {:?}", Self::name(), specifier);
         match *specifier {
             All => Ok(Self::supported_ordinals()),
-            Point(ordinal) => Ok(([ordinal]).iter().cloned().collect()),
+            Point(ordinal) => Ok(([ordinal]).iter().copied().collect()),
             Range(start, end) => {
                 match (Self::validate_ordinal(start), Self::validate_ordinal(end)) {
                     (Ok(start), Ok(end)) if start <= end => Ok((start..end + 1).collect()),
@@ -344,7 +344,7 @@ where
             }
             RootSpecifier::NamedPoint(ref name) => ([Self::ordinal_from_name(name)?])
                 .iter()
-                .cloned()
+                .copied()
                 .collect::<OrdinalSet>(),
         };
         Ok(ordinals)
