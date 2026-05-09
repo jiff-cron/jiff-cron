@@ -87,7 +87,7 @@ impl Schedule {
         let ordinals = self.ordinals(unit)?;
         let current = Self::current(&zoned, unit)?;
 
-        // Determine the next ordinal to use for the given unit and timestamp.
+        // Determine the previous ordinal to use for the given unit and timestamp.
         let interval = ordinals
             .range(..current)
             .next_back()
@@ -110,40 +110,96 @@ impl Schedule {
     }
 
     fn reset_next(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
-        // Pick the first available ordinal for the given unit.
         let ordinals = self.ordinals(unit)?;
+
+        // `Month` reset must jointly set `Day` to respect the days-in-month constraint.
+        //
+        // Iterate months in ascending order.
+        // For each, find the first valid day ordinal.
+        if let Unit::Month = unit {
+            let day_ordinals = self.ordinals(Unit::Day)?;
+
+            for &month_ordinal in ordinals.iter() {
+                let Ok(month) = zoned.with().month(month_ordinal as i8).day(1).build() else {
+                    continue;
+                };
+
+                let days_in_month = month.days_in_month() as u32;
+                if let Some(&day_ordinal) = day_ordinals
+                    .iter()
+                    .find(|&&day_ordinal| day_ordinal <= days_in_month)
+                {
+                    return zoned
+                        .with()
+                        .month(month_ordinal as i8)
+                        .day(day_ordinal as i8)
+                        .build()
+                        .ok();
+                }
+            }
+
+            return None;
+        }
+
+        // Pick the first available ordinal for the given unit.
         let first = *ordinals.first()?;
 
-        // Simply replace the value of the corresponding unit.
         Some(match unit {
             Unit::Second => zoned.with().second(first as i8).build().ok()?,
             Unit::Minute => zoned.with().minute(first as i8).build().ok()?,
             Unit::Hour => zoned.with().hour(first as i8).build().ok()?,
             Unit::Day => zoned.with().day(first as i8).build().ok()?,
-            Unit::Month => zoned.with().month(first as i8).build().ok()?,
             Unit::Year => zoned.with().year(first as i16).build().ok()?,
             _ => return None,
         })
     }
 
     fn reset_prev(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
+        let ordinals = self.ordinals(unit)?;
+
+        // `Month` reset must jointly set `Day` to respect the days-in-month constraint.
+        //
+        // Iterate months in descending order.
+        // For each, find the last valid day ordinal.
+        if let Unit::Month = unit {
+            let day_ordinals = self.ordinals(Unit::Day)?;
+
+            for &month_ordinal in ordinals.iter().rev() {
+                let Ok(month) = zoned.with().month(month_ordinal as i8).day(1).build() else {
+                    continue;
+                };
+
+                let days_in_month = month.days_in_month() as u32;
+                if let Some(&day_ordinal) = day_ordinals
+                    .iter()
+                    .rev()
+                    .find(|&&day_ordinal| day_ordinal <= days_in_month)
+                {
+                    return zoned
+                        .with()
+                        .month(month_ordinal as i8)
+                        .day(day_ordinal as i8)
+                        .build()
+                        .ok();
+                }
+            }
+
+            return None;
+        }
+
         // Pick the last available ordinal for the given unit. Ensure that if we are
         // working with days, that we do not pick ordinals greater than the
         // number of days in the current month.
-        let ordinals = self.ordinals(unit)?;
-
         let last = *ordinals.iter().rev().find(|next| match unit {
             Unit::Day => **next <= zoned.days_in_month() as u32,
             _ => true,
         })?;
 
-        // Simply replace the value of the corresponding unit.
         Some(match unit {
             Unit::Second => zoned.with().second(last as i8).build().ok()?,
             Unit::Minute => zoned.with().minute(last as i8).build().ok()?,
             Unit::Hour => zoned.with().hour(last as i8).build().ok()?,
             Unit::Day => zoned.with().day(last as i8).build().ok()?,
-            Unit::Month => zoned.with().month(last as i8).build().ok()?,
             Unit::Year => zoned.with().year(last as i16).build().ok()?,
             _ => return None,
         })
@@ -158,10 +214,10 @@ impl Schedule {
             Unit::Month,
             Unit::Year,
         ];
-        let mut candidate = after.clone();
 
         // First try rounding up the candidate to the nearest second.
-        let rounded = candidate
+        let mut candidate = after
+            .clone()
             .round(
                 ZonedRound::new()
                     .smallest(Unit::Second)
@@ -170,54 +226,75 @@ impl Schedule {
             .ok()?;
 
         // If all fields have valid ordinals, return the rounded timestamp.
-        if rounded != candidate {
+        if candidate != *after {
             let mut valid = true;
 
             for unit in &units {
                 let unit = *unit;
                 let ordinals = self.ordinals(unit)?;
-                let current = Self::current(&rounded, unit)?;
+                let current = Self::current(&candidate, unit)?;
 
                 valid &= ordinals.contains(&current);
             }
 
             if valid {
-                return Some(rounded);
+                return Some(candidate);
             }
         }
 
-        candidate = rounded;
+        'candidates: loop {
+            let mut units_iter = units.iter().enumerate();
 
-        loop {
-            'outer: for (i, unit) in units.iter().enumerate() {
-                // Determine the smallest possible unit for which we can simply pick the next
-                // ordinal without wrapping around.
-                let Some(new_candidate) = self.adjust_next(candidate.clone(), *unit) else {
-                    continue;
+            candidate = 'units: loop {
+                let Some((i, unit)) = units_iter.next() else {
+                    // No valid candidate could be found,
+                    // exhausting all possible valid ordinals (e.g., year > 2100).
+                    return None;
                 };
 
-                // Check if all larger units have valid ordinals. Otherwise we have to try the
-                // next smallest possible unit.
+                // Determine the smallest possible unit for which we can
+                // simply pick the next larger ordinal without wrapping around.
+                let Some(adjusted_candidate) = self.adjust_next(candidate.clone(), *unit) else {
+                    continue 'units;
+                };
+
+                // Check if all larger units have valid ordinals.
+                // Otherwise we have to try the next smallest possible unit.
                 for unit in &units[i..] {
                     let ordinals = self.ordinals(*unit)?;
-                    let current = Self::current(&new_candidate, *unit)?;
+                    let current = Self::current(&adjusted_candidate, *unit)?;
 
                     if !ordinals.contains(&current) {
-                        continue 'outer;
+                        continue 'units;
                     }
                 }
 
                 // At this point we found a suitable candidate for which we have to reset the
                 // values corresponding to the units smaller than the unit we found. We simply
                 // pick the smallest possible ordinal for each.
-                candidate = new_candidate;
+
+                let mut reset_candidate = adjusted_candidate.clone();
 
                 for unit in units[..i].iter().rev() {
-                    candidate = self.reset_next(candidate, *unit)?;
+                    match self.reset_next(reset_candidate.clone(), *unit) {
+                        Some(reset_result) => reset_candidate = reset_result,
+                        None => {
+                            // Unit reset had no valid ordinal. Discard reset candidate.
+                            //
+                            // Advance past the failed position so the next iteration
+                            // tries a later starting point (e.g., the next year).
+                            candidate = adjusted_candidate;
+
+                            // Reset failed; retry from the advanced candidate.
+                            continue 'candidates;
+                        }
+                    }
                 }
 
-                break;
-            }
+                // Reset succeeded.
+                // Go forward with reset candidate for day of week check.
+                break 'units reset_candidate;
+            };
 
             // Keep going until the weekday is valid for this schedule.
             if !self
@@ -226,7 +303,7 @@ impl Schedule {
                 .ordinals()
                 .contains(&(candidate.weekday().to_sunday_one_offset() as u32))
             {
-                continue;
+                continue 'candidates;
             }
 
             // This is the next possible candidate that adheres to the schedule.
@@ -243,10 +320,10 @@ impl Schedule {
             Unit::Month,
             Unit::Year,
         ];
-        let mut candidate = before.clone();
 
         // First try rounding up the candidate to the nearest second.
-        let rounded = candidate
+        let mut candidate = before
+            .clone()
             .round(
                 ZonedRound::new()
                     .smallest(Unit::Second)
@@ -255,54 +332,75 @@ impl Schedule {
             .ok()?;
 
         // If all fields have valid ordinals, return the rounded timestamp.
-        if rounded != candidate {
+        if candidate != *before {
             let mut valid = true;
 
             for unit in &units {
                 let unit = *unit;
                 let ordinals = self.ordinals(unit)?;
-                let current = Self::current(&rounded, unit)?;
+                let current = Self::current(&candidate, unit)?;
 
                 valid &= ordinals.contains(&current);
             }
 
             if valid {
-                return Some(rounded);
+                return Some(candidate);
             }
         }
 
-        candidate = rounded;
+        'candidates: loop {
+            let mut units_iter = units.iter().enumerate();
 
-        loop {
-            'outer: for (i, unit) in units.iter().enumerate() {
-                // Determine the smallest possible unit for which we can simply pick the next
-                // ordinal without wrapping around.
-                let Some(new_candidate) = self.adjust_prev(candidate.clone(), *unit) else {
-                    continue;
+            candidate = 'units: loop {
+                let Some((i, unit)) = units_iter.next() else {
+                    // No valid candidate could be found,
+                    // exhausting all possible valid ordinals (e.g., year < 1970).
+                    return None;
                 };
 
-                // Check if all larger units have valid ordinals. Otherwise we have to try the
-                // next smallest possible unit.
+                // Determine the smallest possible unit for which we can
+                // simply pick the next smaller ordinal without wrapping around.
+                let Some(adjusted_candidate) = self.adjust_prev(candidate.clone(), *unit) else {
+                    continue 'units;
+                };
+
+                // Check if all larger units have valid ordinals.
+                // Otherwise we have to try the next smallest possible unit.
                 for unit in &units[i..] {
                     let ordinals = self.ordinals(*unit)?;
-                    let current = Self::current(&new_candidate, *unit)?;
+                    let current = Self::current(&adjusted_candidate, *unit)?;
 
                     if !ordinals.contains(&current) {
-                        continue 'outer;
+                        continue 'units;
                     }
                 }
 
                 // At this point we found a suitable candidate for which we have to reset the
                 // values corresponding to the units smaller than the unit we found. We simply
                 // pick the greatest possible ordinal for each.
-                candidate = new_candidate;
+
+                let mut reset_candidate = adjusted_candidate.clone();
 
                 for unit in units[..i].iter().rev() {
-                    candidate = self.reset_prev(candidate, *unit)?;
+                    match self.reset_prev(reset_candidate.clone(), *unit) {
+                        Some(reset_result) => reset_candidate = reset_result,
+                        None => {
+                            // Unit reset had no valid ordinal. Discard reset candidate.
+                            //
+                            // Advance past the failed position so the next iteration
+                            // tries an earlier starting point (e.g., the previous year).
+                            candidate = adjusted_candidate;
+
+                            // Reset failed; retry from the advanced candidate.
+                            continue 'candidates;
+                        }
+                    }
                 }
 
-                break;
-            }
+                // Reset succeeded.
+                // Go forward with reset candidate for day of week check.
+                break 'units reset_candidate;
+            };
 
             // Keep going until the weekday is valid for this schedule.
             if !self
