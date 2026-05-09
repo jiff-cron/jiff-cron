@@ -47,7 +47,7 @@ mod tests {
         let mut date = Zoned::now().with_time_zone(TimeZone::UTC);
         println!("Fire times for {expression}:");
         for _ in 0..20 {
-            date = schedule.after(&date).next().expect("No further dates!");
+            date = schedule.after(date).next().expect("No further dates!");
             println!("→ {date}");
         }
     }
@@ -72,7 +72,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let next = schedule.after(&start).next().unwrap();
+        let next = schedule.after(start).next().unwrap();
         assert_eq!(
             next,
             jiff::civil::date(2028, 2, 29)
@@ -101,7 +101,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let next = schedule.after(&start).next().unwrap();
+        let next = schedule.after(start).next().unwrap();
         assert_eq!(
             next,
             jiff::civil::date(2026, 3, 29)
@@ -126,7 +126,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let prev = schedule.after(&start).next_back().unwrap();
+        let prev = schedule.after(start).next_back().unwrap();
         assert_eq!(
             prev,
             jiff::civil::date(2024, 2, 29)
@@ -150,7 +150,7 @@ mod tests {
     fn test_upcoming_owned_iterator() {
         let expression = "0 2,17,51 1-3,6,9-11 4,29 2,3,7 Wed";
         let schedule = Schedule::from_str(expression).unwrap();
-        let upcoming_owned_iter = schedule.upcoming_owned(TimeZone::UTC);
+        let upcoming_owned_iter = schedule.into_upcoming(TimeZone::UTC);
         println!("Upcoming fire times for '{expression}':");
         for datetime in upcoming_owned_iter.take(12) {
             println!("→ {datetime}");
@@ -205,7 +205,7 @@ mod tests {
             .at(14, 29, 36, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let mut events = schedule.after(&starting_date);
+        let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 0, 0, 0)
@@ -237,7 +237,7 @@ mod tests {
             .at(14, 29, 36, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let mut events = schedule.after(&starting_date);
+        let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2017, 11, 1)
                 .at(0, 0, 0, 0)
@@ -269,7 +269,7 @@ mod tests {
             .at(14, 29, 36, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let mut events = schedule.after(&starting_date);
+        let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2016, 12, 25)
                 .at(0, 0, 0, 0)
@@ -301,7 +301,7 @@ mod tests {
             .at(14, 29, 36, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let mut events = schedule.after(&starting_date);
+        let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2016, 12, 24)
                 .at(0, 0, 0, 0)
@@ -333,7 +333,7 @@ mod tests {
             .at(22, 29, 36, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let mut events = schedule.after(&starting_date);
+        let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2017, 2, 25)
                 .at(23, 0, 0, 0)
@@ -365,7 +365,7 @@ mod tests {
             .at(14, 29, 36, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let mut events = schedule.after(&starting_date);
+        let mut events = schedule.after(starting_date);
 
         assert_eq!(
             date(2018, 1, 1)
@@ -525,13 +525,13 @@ mod tests {
             .at(0, 0, 59, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let next_time_1 = schedule.after(&start_time_1).next().unwrap();
+        let next_time_1 = schedule.after(start_time_1).next().unwrap();
 
         let start_time_2 = date(2017, 10, 24)
             .at(0, 1, 0, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let next_time_2 = schedule.after(&start_time_2).next().unwrap();
+        let next_time_2 = schedule.after(start_time_2).next().unwrap();
         assert_eq!(next_time_1, next_time_2);
     }
 
@@ -542,10 +542,10 @@ mod tests {
             .at(22, 30, 0, 0)
             .to_zoned(TimeZone::UTC)
             .unwrap();
-        let next_time_1 = schedule_1.after(&start_time).next().unwrap();
+        let next_time_1 = schedule_1.after(start_time.clone()).next().unwrap();
 
         let schedule_2 = "00 00 * * * * *".parse::<Schedule>().unwrap();
-        let next_time_2 = schedule_2.after(&start_time).next().unwrap();
+        let next_time_2 = schedule_2.after(start_time).next().unwrap();
         assert_eq!(next_time_1, next_time_2);
     }
 
@@ -558,7 +558,7 @@ mod tests {
             .to_zoned(schedule_tz.clone())
             .unwrap();
 
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         assert_eq!(
             date(2020, 9, 18)
                 .at(0, 0, 0, 0)
@@ -577,7 +577,7 @@ mod tests {
             .to_zoned(schedule_tz.clone())
             .unwrap();
 
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         assert_eq!(
             date(2020, 9, 18)
                 .at(0, 0, 0, 0)
@@ -596,7 +596,7 @@ mod tests {
             .to_zoned(schedule_tz.clone())
             .unwrap();
 
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 1, 1)
                 .at(0, 0, 17, 0)
@@ -636,7 +636,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(schedule_tz.clone())
             .unwrap();
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 3, 1)
                 .at(0, 0, 0, 0)
@@ -668,7 +668,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(schedule_tz.clone())
             .unwrap();
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 1, 1)
                 .at(10, 0, 0, 0)
@@ -700,7 +700,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(schedule_tz.clone())
             .unwrap();
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 1, 11)
                 .at(0, 0, 0, 0)
@@ -744,7 +744,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(schedule_tz.clone())
             .unwrap();
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 2, 1)
                 .at(0, 0, 0, 0)
@@ -784,7 +784,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(schedule_tz.clone())
             .unwrap();
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2030, 1, 1)
                 .at(0, 0, 0, 0)
@@ -808,7 +808,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(schedule_tz.clone())
             .unwrap();
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 1, 1)
                 .at(0, 21, 0, 0)
@@ -856,7 +856,7 @@ mod tests {
             .at(0, 0, 0, 0)
             .to_zoned(schedule_tz.clone())
             .unwrap();
-        let mut schedule_iter = schedule.after(&dt);
+        let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 3, 1)
                 .at(0, 0, 0, 0)

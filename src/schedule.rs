@@ -419,24 +419,24 @@ impl Schedule {
     /// the schedule starting with the current time if applicable.
     pub fn upcoming(&self, timezone: TimeZone) -> ScheduleIterator<'_> {
         let after = Zoned::now().with_time_zone(timezone);
-        self.after(&after)
+        self.after(after)
     }
 
     /// The same, but with an iterator with a static ownership
-    pub fn upcoming_owned(&self, timezone: TimeZone) -> OwnedScheduleIterator {
+    pub fn into_upcoming(self, timezone: TimeZone) -> OwnedScheduleIterator {
         let after = Zoned::now().with_time_zone(timezone);
-        self.after_owned(after)
+        self.into_after(after)
     }
 
     /// Like the `upcoming` method, but allows you to specify a start time other
     /// than the present.
-    pub fn after(&self, after: &Zoned) -> ScheduleIterator<'_> {
+    pub fn after(&self, after: Zoned) -> ScheduleIterator<'_> {
         ScheduleIterator::new(self, after)
     }
 
     /// The same, but with a static ownership.
-    pub fn after_owned(&self, after: Zoned) -> OwnedScheduleIterator {
-        OwnedScheduleIterator::new(self.clone(), after)
+    pub fn into_after(self, after: Zoned) -> OwnedScheduleIterator {
+        OwnedScheduleIterator::new(self, after)
     }
 
     pub fn includes(&self, date_time: Zoned) -> bool {
@@ -560,10 +560,10 @@ pub struct ScheduleIterator<'a> {
 //TODO: Cutoff datetime?
 
 impl<'a> ScheduleIterator<'a> {
-    fn new(schedule: &'a Schedule, starting_datetime: &Zoned) -> Self {
+    fn new(schedule: &'a Schedule, starting_datetime: Zoned) -> Self {
         ScheduleIterator {
             schedule,
-            previous_datetime: Some(starting_datetime.clone()),
+            previous_datetime: Some(starting_datetime),
         }
     }
 }
@@ -604,7 +604,7 @@ pub struct OwnedScheduleIterator {
 }
 
 impl OwnedScheduleIterator {
-    pub fn new(schedule: Schedule, starting_datetime: Zoned) -> Self {
+    fn new(schedule: Schedule, starting_datetime: Zoned) -> Self {
         Self {
             schedule,
             previous_datetime: Some(starting_datetime),
@@ -766,7 +766,7 @@ mod test {
                 .unwrap(),
         ]
         .into_iter()
-        .eq(schedule.after(&starting_date).take(3)));
+        .eq(schedule.after(starting_date).take(3)));
     }
 
     #[cfg(feature = "serde")]
@@ -816,7 +816,7 @@ mod test {
                 .unwrap(),
         ]
         .into_iter()
-        .eq(schedule.after(&starting_date).take(7)));
+        .eq(schedule.after(starting_date).take(7)));
     }
 
     #[test]
@@ -906,7 +906,7 @@ mod test {
     fn test_upcoming_utc_owned() {
         let expression = "0 0,30 0,6,12,18 1,15 Jan-March Thurs";
         let schedule = Schedule::from_str(expression).unwrap();
-        let mut upcoming = schedule.upcoming_owned(TimeZone::UTC);
+        let mut upcoming = schedule.into_upcoming(TimeZone::UTC);
         let next1 = upcoming.next();
         assert!(next1.is_some());
         let next2 = upcoming.next();
@@ -938,7 +938,7 @@ mod test {
     fn test_upcoming_rev_utc_owned() {
         let expression = "0 0,30 0,6,12,18 1,15 Jan-March Thurs";
         let schedule = Schedule::from_str(expression).unwrap();
-        let mut upcoming = schedule.upcoming_owned(TimeZone::UTC).rev();
+        let mut upcoming = schedule.into_upcoming(TimeZone::UTC).rev();
         let prev1 = upcoming.next();
         assert!(prev1.is_some());
         let prev2 = upcoming.next();
@@ -1007,7 +1007,7 @@ mod test {
             .unwrap(); // puts it in the middle of the DST transition
 
         let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
-        let next = schedule.after(&dt).next().unwrap();
+        let next = schedule.after(dt.clone()).next().unwrap();
         assert!(next > dt); // test is ensuring line above does not panic
     }
 
@@ -1022,7 +1022,7 @@ mod test {
             .unwrap(); // puts it in the middle of the DST transition
 
         let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
-        let prev = schedule.after(&dt).next_back().unwrap();
+        let prev = schedule.after(dt.clone()).next_back().unwrap();
         assert!(prev < dt); // test is ensuring line above does not panic
     }
 
@@ -1035,7 +1035,7 @@ mod test {
             .unwrap();
 
         let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
-        assert!(schedule.after(&dt).next().is_none());
+        assert!(schedule.after(dt).next().is_none());
     }
 
     #[test]
@@ -1047,16 +1047,15 @@ mod test {
             .unwrap();
 
         let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
-        assert!(schedule.after(&dt).next_back().is_none());
+        assert!(schedule.after(dt).next_back().is_none());
     }
 
     #[test]
     fn test_no_panic_on_leap_day_time_after() {
-        let dt = "2024-02-29T10:00:00.000+08:00[Asia/Singapore]" // N.B. TZ inferred from original
-            .parse()
-            .unwrap();
+        let dt = Zoned::from_str("2024-02-29T10:00:00.000+08:00[Asia/Singapore]").unwrap(); // N.B. TZ inferred from original
+
         let schedule = Schedule::from_str("0 0 0 * * * 2100").unwrap();
-        let next = schedule.after(&dt).next().unwrap();
+        let next = schedule.after(dt.clone()).next().unwrap();
         assert!(next > dt); // test is ensuring line above does not panic
     }
 
@@ -1100,7 +1099,7 @@ mod test {
             .unwrap();
         let schedule = Schedule::from_str("0 0 * * * * *").unwrap();
         let times = schedule
-            .after(&dt)
+            .after(dt)
             .map(|x| x.to_string())
             .take(5)
             .collect::<Vec<_>>();
@@ -1124,7 +1123,7 @@ mod test {
             .unwrap();
         let schedule = Schedule::from_str("0 0 * * * * *").unwrap();
         let times = schedule
-            .after(&dt)
+            .after(dt)
             .map(|x| x.to_string())
             .rev()
             .take(5)
