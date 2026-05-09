@@ -80,7 +80,7 @@ Upcoming fire times:
 Add to your `Cargo.toml`:
 
 ```toml
-jiff-cron = "0.1.1"
+jiff-cron = "0.2.0"
 ```
 
 You can enable optional [`serde`](https://docs.rs/crate/serde) support

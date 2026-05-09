@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] <!-- release-date -->
 
+## [0.2.0] - 2026-05-09
+
 ### BREAKING CHANGES
 
 - Re-define `Schedule` equality in terms of **parsed representation**.
@@ -59,5 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: Don't accept invalid step for `Period` (https://github.com/maxcountryman/jiff-cron/commit/cabee0f36eec4faa34ebe3780046516d4a97a41b, https://github.com/zslayton/cron/pull/122) by @bombsimon
 
 <!-- next-url -->
-[Unreleased]: https://github.com/LeoniePhiline/async-mailer/compare/v0.1.1...HEAD
-[0.1.0]: https://github.com/LeoniePhiline/async-mailer/releases/tag/v0.1.1
+[Unreleased]: https://github.com/jiff-cron/jiff-cron/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/jiff-cron/jiff-cron/compare/v0.1.1...v0.2.0
+[0.1.0]: https://github.com/jiff-cron/jiff-cron/releases/tag/v0.1.1
