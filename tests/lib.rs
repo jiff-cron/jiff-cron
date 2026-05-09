@@ -48,7 +48,7 @@ mod tests {
         println!("Fire times for {expression}:");
         for _ in 0..20 {
             date = schedule.after(&date).next().expect("No further dates!");
-            println!("-> {date}");
+            println!("→ {date}");
         }
     }
 
@@ -142,7 +142,7 @@ mod tests {
         let schedule = Schedule::from_str(expression).unwrap();
         println!("Upcoming fire times for '{expression}':");
         for datetime in schedule.upcoming(TimeZone::UTC).take(12) {
-            println!("-> {datetime}");
+            println!("→ {datetime}");
         }
     }
 
@@ -153,7 +153,7 @@ mod tests {
         let upcoming_owned_iter = schedule.upcoming_owned(TimeZone::UTC);
         println!("Upcoming fire times for '{expression}':");
         for datetime in upcoming_owned_iter.clone().take(12) {
-            println!("-> {datetime}");
+            println!("→ {datetime}");
         }
     }
 

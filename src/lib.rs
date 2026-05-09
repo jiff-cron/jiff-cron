@@ -16,7 +16,7 @@
 //!     let schedule = Schedule::from_str(expression).unwrap();
 //!     println!("Upcoming fire times:");
 //!     for datetime in schedule.upcoming(TimeZone::UTC).take(10) {
-//!         println!("-> {}", datetime);
+//!         println!("→ {}", datetime);
 //!     }
 //! }
 //!
@@ -59,7 +59,7 @@
 //!         .unwrap();
 //!     println!("Upcoming fire times:");
 //!     for datetime in schedule.after(&after_datetime).take(5) {
-//!         println!("-> {}", datetime);
+//!         println!("→ {}", datetime);
 //!     }
 //! }
 //!
