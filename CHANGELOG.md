@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Users depending on **source string** equality must migrate to comparing `a.source() == b.source()`. (https://github.com/jiff-cron/jiff-cron/issues/9, https://github.com/maxcountryman/jiff-cron/pull/10) by @LeoniePhiline
 - Replace `once_cell::sync::Lazy` by `std::sync::LazyLock` implementation.
   The MSRV has been lifted to Rust 1.80.0. (https://github.com/jiff-cron/jiff-cron/issues/7, https://github.com/jiff-cron/jiff-cron/pull/12) by @LeoniePhiline
+- `jiff` was updated to 0.2 and re-exported. Use the re-export for reliable version compatibility.
 
 ### Added
 
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Avoid running CI workflows twice (https://github.com/jiff-cron/jiff-cron/commit/398054060fce88b92883e3875328ca18da9364ed) by @maxcountryman
 - Update `jiff` to 0.2 (https://github.com/jiff-cron/jiff-cron/pull/29) by @LeoniePhiline
+- Constrain day range at month reset to handle non-leap years at Feb 29 (https://github.com/jiff-cron/jiff-cron/pull/47) by @LeoniePhiline
 
 ## [0.1.1] - 2024-11-01
 
