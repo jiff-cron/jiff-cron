@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] <!-- release-date -->
 
+### BREAKING CHANGES
+
+- Make schedule iterator API more idiomatic (https://github.com/jiff-cron/jiff-cron/pull/51) by @LeoniePhiline. **Migration:**
+  - Replace `Schedule::upcoming_owned` by `Schedule::into_upcoming`.
+  - Replace `Schedule::after_owned` by `Schedule::into_after`.
+  - `Schedule::into_upcoming` now takes ownership of `Schedule`. Clone if required.
+  - `Schedule::after` now takes ownership of argument `after: Zoned`, rather than cloning internally. Clone if required.
+  - `Schedule::into_after` now takes ownership of `Schedule`. Clone if required.
+  - `OwnedScheduleIterator::new` is no longer public. Use `Schedule::into_after` instead.
+
 ### Changed
 
 - Eliminate various `clone`s in schedule iterator hot loops to improve performance (https://github.com/jiff-cron/jiff-cron/pull/49) by @LeoniePhiline.
