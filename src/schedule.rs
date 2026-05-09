@@ -1029,6 +1029,30 @@ mod test {
     }
 
     #[test]
+    fn test_no_panic_on_year_ordinals_exhausted_after() {
+        let schedule_tz: TimeZone = TimeZone::get("Europe/London").unwrap();
+        let dt = DateTime::new(2100, 12, 31, 0, 0, 0, 0)
+            .unwrap()
+            .to_zoned(schedule_tz)
+            .unwrap();
+
+        let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
+        assert!(schedule.after(&dt).next().is_none());
+    }
+
+    #[test]
+    fn test_no_panic_on_year_ordinals_exhausted_before() {
+        let schedule_tz: TimeZone = TimeZone::get("Europe/London").unwrap();
+        let dt = DateTime::new(1970, 1, 1, 0, 0, 0, 0)
+            .unwrap()
+            .to_zoned(schedule_tz)
+            .unwrap();
+
+        let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
+        assert!(schedule.after(&dt).next_back().is_none());
+    }
+
+    #[test]
     fn test_no_panic_on_leap_day_time_after() {
         let dt = "2024-02-29T10:00:00.000+08:00[Asia/Singapore]" // N.B. TZ inferred from original
             .parse()
