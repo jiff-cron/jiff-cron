@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] <!-- release-date -->
 
+### Changed
+
+- Eliminate various `clone`s in schedule iterator hot loops to improve performance (https://github.com/jiff-cron/jiff-cron/pull/49) by @LeoniePhiline.
+
 ## [0.2.0] - 2026-05-09
 
 ### BREAKING CHANGES
