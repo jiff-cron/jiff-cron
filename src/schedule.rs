@@ -53,9 +53,9 @@ impl Schedule {
         }
     }
 
-    fn adjust_next(&self, mut zoned: Zoned, unit: Unit) -> Option<Zoned> {
+    fn adjust_next(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
         let ordinals = self.ordinals(unit);
-        let current = Self::current(&zoned, unit);
+        let current = Self::current(zoned, unit);
 
         // Determine the next ordinal to use for the given unit and timestamp.
         let interval = ordinals
@@ -78,14 +78,12 @@ impl Schedule {
             _ => unreachable!(),
         };
 
-        zoned = zoned.checked_add(interval).ok()?;
-
-        Some(zoned)
+        zoned.checked_add(interval).ok()
     }
 
-    fn adjust_prev(&self, mut zoned: Zoned, unit: Unit) -> Option<Zoned> {
+    fn adjust_prev(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
         let ordinals = self.ordinals(unit);
-        let current = Self::current(&zoned, unit);
+        let current = Self::current(zoned, unit);
 
         // Determine the previous ordinal to use for the given unit and timestamp.
         let interval = ordinals
@@ -104,12 +102,10 @@ impl Schedule {
             _ => unreachable!(),
         };
 
-        zoned = zoned.checked_sub(interval).ok()?;
-
-        Some(zoned)
+        zoned.checked_sub(interval).ok()
     }
 
-    fn reset_next(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
+    fn reset_next(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
         let ordinals = self.ordinals(unit);
 
         // `Month` reset must jointly set `Day` to respect the days-in-month constraint.
@@ -156,7 +152,7 @@ impl Schedule {
         })
     }
 
-    fn reset_prev(&self, zoned: Zoned, unit: Unit) -> Option<Zoned> {
+    fn reset_prev(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
         let ordinals = self.ordinals(unit);
 
         // `Month` reset must jointly set `Day` to respect the days-in-month constraint.
@@ -221,7 +217,6 @@ impl Schedule {
 
         // First try rounding up the candidate to the nearest second.
         let mut candidate = after
-            .clone()
             .round(
                 ZonedRound::new()
                     .smallest(Unit::Second)
@@ -258,7 +253,7 @@ impl Schedule {
 
                 // Determine the smallest possible unit for which we can
                 // simply pick the next larger ordinal without wrapping around.
-                let Some(adjusted_candidate) = self.adjust_next(candidate.clone(), *unit) else {
+                let Some(adjusted_candidate) = self.adjust_next(&candidate, *unit) else {
                     continue 'units;
                 };
 
@@ -280,7 +275,7 @@ impl Schedule {
                 let mut reset_candidate = adjusted_candidate.clone();
 
                 for unit in units[..i].iter().rev() {
-                    match self.reset_next(reset_candidate.clone(), *unit) {
+                    match self.reset_next(&reset_candidate, *unit) {
                         Some(reset_result) => reset_candidate = reset_result,
                         None => {
                             // Unit reset had no valid ordinal. Discard reset candidate.
@@ -327,7 +322,6 @@ impl Schedule {
 
         // First try rounding up the candidate to the nearest second.
         let mut candidate = before
-            .clone()
             .round(
                 ZonedRound::new()
                     .smallest(Unit::Second)
@@ -364,7 +358,7 @@ impl Schedule {
 
                 // Determine the smallest possible unit for which we can
                 // simply pick the next smaller ordinal without wrapping around.
-                let Some(adjusted_candidate) = self.adjust_prev(candidate.clone(), *unit) else {
+                let Some(adjusted_candidate) = self.adjust_prev(&candidate, *unit) else {
                     continue 'units;
                 };
 
@@ -386,7 +380,7 @@ impl Schedule {
                 let mut reset_candidate = adjusted_candidate.clone();
 
                 for unit in units[..i].iter().rev() {
-                    match self.reset_prev(reset_candidate.clone(), *unit) {
+                    match self.reset_prev(&reset_candidate, *unit) {
                         Some(reset_result) => reset_candidate = reset_result,
                         None => {
                             // Unit reset had no valid ordinal. Discard reset candidate.
