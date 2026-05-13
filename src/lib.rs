@@ -81,7 +81,7 @@
 //! Add to your `Cargo.toml`:
 //!
 //! ```toml
-//! jiff-cron = "0.2.0"
+//! jiff-cron = "0.3.0"
 //! ```
 //!
 //! You can enable optional [`serde`](https://docs.rs/crate/serde) support
