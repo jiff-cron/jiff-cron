@@ -826,7 +826,7 @@ mod test {
 
         let utc_now = Zoned::now().with_time_zone(TimeZone::UTC);
         let next = schedule.next_after(&utc_now);
-        println!("NEXT AFTER for {} {:?}", expression, &next);
+        println!("NEXT AFTER for {} {:?}", expression, next);
         assert!(next.is_some());
 
         let next2 = schedule.next_after(next.as_ref().unwrap());
