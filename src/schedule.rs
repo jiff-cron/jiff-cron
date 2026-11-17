@@ -39,8 +39,8 @@ impl Schedule {
         }
     }
 
-    // Get the current value for the corresponding unit in the given timestamp with
-    // associated timezone.
+    // Get the current value for the corresponding unit in the given timestamp
+    // with associated timezone.
     fn current(zoned: &Zoned, unit: Unit) -> u32 {
         match unit {
             Unit::Second => zoned.second() as u32,
@@ -85,7 +85,8 @@ impl Schedule {
         let ordinals = self.ordinals(unit);
         let current = Self::current(zoned, unit);
 
-        // Determine the previous ordinal to use for the given unit and timestamp.
+        // Determine the previous ordinal to use for the given unit and
+        // timestamp.
         let interval = ordinals
             .range(..current)
             .next_back()
@@ -108,7 +109,8 @@ impl Schedule {
     fn reset_next(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
         let ordinals = self.ordinals(unit);
 
-        // `Month` reset must jointly set `Day` to respect the days-in-month constraint.
+        // `Month` reset must jointly set `Day` to respect the days-in-month
+        // constraint.
         //
         // Iterate months in ascending order.
         // For each, find the first valid day ordinal.
@@ -155,7 +157,8 @@ impl Schedule {
     fn reset_prev(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
         let ordinals = self.ordinals(unit);
 
-        // `Month` reset must jointly set `Day` to respect the days-in-month constraint.
+        // `Month` reset must jointly set `Day` to respect the days-in-month
+        // constraint.
         //
         // Iterate months in descending order.
         // For each, find the last valid day ordinal.
@@ -188,8 +191,8 @@ impl Schedule {
             return None;
         }
 
-        // Pick the last available ordinal for the given unit. Ensure that if we are
-        // working with days, that we do not pick ordinals greater than the
+        // Pick the last available ordinal for the given unit. Ensure that if we
+        // are working with days, that we do not pick ordinals greater than the
         // number of days in the current month.
         let last = *ordinals.iter().rev().find(|next| match unit {
             Unit::Day => **next <= zoned.days_in_month() as u32,
@@ -247,7 +250,8 @@ impl Schedule {
             candidate = 'units: loop {
                 let Some((i, unit)) = units_iter.next() else {
                     // No valid candidate could be found,
-                    // exhausting all possible valid ordinals (e.g., year > 2100).
+                    // exhausting all possible valid ordinals (e.g., year >
+                    // 2100).
                     return None;
                 };
 
@@ -268,9 +272,10 @@ impl Schedule {
                     }
                 }
 
-                // At this point we found a suitable candidate for which we have to reset the
-                // values corresponding to the units smaller than the unit we found. We simply
-                // pick the smallest possible ordinal for each.
+                // At this point we found a suitable candidate for which we have
+                // to reset the values corresponding to the units smaller than
+                // the unit we found. We simply pick the smallest possible
+                // ordinal for each.
 
                 let mut reset_candidate = adjusted_candidate.clone();
 
@@ -278,10 +283,12 @@ impl Schedule {
                     match self.reset_next(&reset_candidate, *unit) {
                         Some(reset_result) => reset_candidate = reset_result,
                         None => {
-                            // Unit reset had no valid ordinal. Discard reset candidate.
+                            // Unit reset had no valid ordinal. Discard reset
+                            // candidate.
                             //
-                            // Advance past the failed position so the next iteration
-                            // tries a later starting point (e.g., the next year).
+                            // Advance past the failed position so the next
+                            // iteration tries a later starting point (e.g., the
+                            // next year).
                             candidate = adjusted_candidate;
 
                             // Reset failed; retry from the advanced candidate.
@@ -352,7 +359,8 @@ impl Schedule {
             candidate = 'units: loop {
                 let Some((i, unit)) = units_iter.next() else {
                     // No valid candidate could be found,
-                    // exhausting all possible valid ordinals (e.g., year < 1970).
+                    // exhausting all possible valid ordinals (e.g., year <
+                    // 1970).
                     return None;
                 };
 
@@ -373,9 +381,10 @@ impl Schedule {
                     }
                 }
 
-                // At this point we found a suitable candidate for which we have to reset the
-                // values corresponding to the units smaller than the unit we found. We simply
-                // pick the greatest possible ordinal for each.
+                // At this point we found a suitable candidate for which we have
+                // to reset the values corresponding to the units smaller than
+                // the unit we found. We simply pick the greatest possible
+                // ordinal for each.
 
                 let mut reset_candidate = adjusted_candidate.clone();
 
@@ -383,10 +392,12 @@ impl Schedule {
                     match self.reset_prev(&reset_candidate, *unit) {
                         Some(reset_result) => reset_candidate = reset_result,
                         None => {
-                            // Unit reset had no valid ordinal. Discard reset candidate.
+                            // Unit reset had no valid ordinal. Discard reset
+                            // candidate.
                             //
-                            // Advance past the failed position so the next iteration
-                            // tries an earlier starting point (e.g., the previous year).
+                            // Advance past the failed position so the next
+                            // iteration tries an earlier starting point (e.g.,
+                            // the previous year).
                             candidate = adjusted_candidate;
 
                             // Reset failed; retry from the advanced candidate.
