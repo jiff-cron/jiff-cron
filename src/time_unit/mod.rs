@@ -281,7 +281,8 @@ where
 
     fn ordinals_from_specifier(specifier: &Specifier) -> Result<OrdinalSet, Error> {
         use self::Specifier::*;
-        //println!("ordinals_from_specifier for {} => {:?}", Self::name(), specifier);
+        //println!("ordinals_from_specifier for {} => {:?}", Self::name(),
+        // specifier);
         match *specifier {
             All => Ok(Self::supported_ordinals()),
             Point(ordinal) => Ok(([ordinal]).iter().copied().collect()),
@@ -332,8 +333,9 @@ where
                 }
 
                 let base_set = match start {
-                    // A point prior to a period implies a range whose start is the specified
-                    // point and terminating inclusively with the inclusive max
+                    // A point prior to a period implies a range whose start is
+                    // the specified point and terminating inclusively with the
+                    // inclusive max
                     Specifier::Point(start) => {
                         let start = Self::validate_ordinal(*start)?;
                         (start..=Self::inclusive_max()).collect()

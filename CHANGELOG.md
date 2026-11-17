@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] <!-- release-date -->
 
+### BREAKING CHANGES
+
+- Update `jiff` to 1.0 (https://github.com/jiff-cron/jiff-cron/issues/57, https://github.com/jiff-cron/jiff-cron/pull/58) by @LeoniePhiline. **Migration:**
+  - Replace `jiff::Zoned` by `jiff::ZonedDateTime`.
+  - Replace `jiff::ZonedRound` by `jiff::ZonedDateTimeRound`.
+  - Replace `jiff::civil::DateTime::to_zoned` by `jiff::civil::DateTime::to_zoned_datetime`.
+  - If you depend on `jiff` directly rather than through the re-export `jiff_cron::jiff`, update it to 1.0 as well. See the [`jiff` changelog](https://github.com/BurntSushi/jiff/blob/HEAD/CHANGELOG.md#100-2026-11-15) for its other changes.
+- The MSRV has been lifted to Rust 1.85, as required by `jiff` 1.0, and is now declared as `rust-version` (https://github.com/jiff-cron/jiff-cron/issues/57, https://github.com/jiff-cron/jiff-cron/pull/58) by @LeoniePhiline.
+
 ## [0.3.0] - 2026-05-13
 
 ### BREAKING CHANGES
