@@ -5,7 +5,7 @@ mod tests {
         str::FromStr,
     };
 
-    use jiff::{civil::date, tz::TimeZone, Zoned};
+    use jiff::{civil::date, tz::TimeZone, ZonedDateTime};
     use jiff_cron::{Schedule, TimeUnitSpec};
 
     #[test]
@@ -44,7 +44,7 @@ mod tests {
     fn test_parse_with_lists() {
         let expression = "1 2,17,51 1-3,6,9-11 4,29 2,3,7 Tues";
         let schedule = Schedule::from_str(expression).unwrap();
-        let mut date = Zoned::now().with_time_zone(TimeZone::UTC);
+        let mut date = ZonedDateTime::now().with_time_zone(TimeZone::UTC);
         println!("Fire times for {expression}:");
         for _ in 0..20 {
             date = schedule.after(date).next().expect("No further dates!");
@@ -54,8 +54,8 @@ mod tests {
 
     /// Leap year multi-year-skip regression test for <https://github.com/jiff-cron/jiff-cron/issues/41>.
     ///
-    /// The non-deterministic `test_parse_with_lists`, using `Zoned::now`,
-    /// only succeeds in leap years before February 29th,
+    /// The non-deterministic `test_parse_with_lists`, using
+    /// `ZonedDateTime::now`, only succeeds in leap years before February 29th,
     /// or in years before a leap year, after February 28th.
     ///
     /// This deterministic test asserts non-leap years being skipped
@@ -70,22 +70,22 @@ mod tests {
         let schedule = Schedule::from_str("0 0 0 29 2 *").unwrap();
         let start = jiff::civil::date(2026, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let next = schedule.after(start).next().unwrap();
         assert_eq!(
             next,
             jiff::civil::date(2028, 2, 29)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap()
         );
     }
 
     /// Leap year month-skip regression test for <https://github.com/jiff-cron/jiff-cron/issues/41>.
     ///
-    /// The non-deterministic `test_parse_with_lists`, using `Zoned::now`,
-    /// only succeeds in leap years before February 29th,
+    /// The non-deterministic `test_parse_with_lists`, using
+    /// `ZonedDateTime::now`, only succeeds in leap years before February 29th,
     /// or in years before a leap year, after February 28th.
     ///
     /// This deterministic test asserts the February of non-leap years being
@@ -99,14 +99,14 @@ mod tests {
         let schedule = Schedule::from_str("0 0 0 29 2,3 *").unwrap();
         let start = jiff::civil::date(2026, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let next = schedule.after(start).next().unwrap();
         assert_eq!(
             next,
             jiff::civil::date(2026, 3, 29)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap()
         );
     }
@@ -124,14 +124,14 @@ mod tests {
         let schedule = Schedule::from_str("0 0 0 29 2 *").unwrap();
         let start = jiff::civil::date(2026, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let prev = schedule.after(start).next_back().unwrap();
         assert_eq!(
             prev,
             jiff::civil::date(2024, 2, 29)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap()
         );
     }
@@ -203,27 +203,27 @@ mod tests {
         let schedule = Schedule::from_str(expression).expect("Failed to parse @yearly.");
         let starting_date = date(2017, 6, 15)
             .at(14, 29, 36, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2019, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2020, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
@@ -235,27 +235,27 @@ mod tests {
         let schedule = Schedule::from_str(expression).expect("Failed to parse @monthly.");
         let starting_date = date(2017, 10, 15)
             .at(14, 29, 36, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2017, 11, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2017, 12, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
@@ -267,27 +267,27 @@ mod tests {
         let schedule = Schedule::from_str(expression).expect("Failed to parse @weekly.");
         let starting_date = date(2016, 12, 23)
             .at(14, 29, 36, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2016, 12, 25)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2017, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2017, 1, 8)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
@@ -299,27 +299,27 @@ mod tests {
         let schedule = Schedule::from_str(expression).expect("Failed to parse @daily.");
         let starting_date = date(2016, 12, 23)
             .at(14, 29, 36, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2016, 12, 24)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2016, 12, 25)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2016, 12, 26)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
@@ -331,27 +331,27 @@ mod tests {
         let schedule = Schedule::from_str(expression).expect("Failed to parse @hourly.");
         let starting_date = date(2017, 2, 25)
             .at(22, 29, 36, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let mut events = schedule.after(starting_date);
         assert_eq!(
             date(2017, 2, 25)
                 .at(23, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2017, 2, 26)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2017, 2, 26)
                 .at(1, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
@@ -363,28 +363,28 @@ mod tests {
         let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
         let starting_date = date(2017, 6, 15)
             .at(14, 29, 36, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let mut events = schedule.after(starting_date);
 
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 0, 20, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 0, 40, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
@@ -392,21 +392,21 @@ mod tests {
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 5, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 5, 20, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 5, 40, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
@@ -414,21 +414,21 @@ mod tests {
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 10, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 10, 20, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
         assert_eq!(
             date(2018, 1, 1)
                 .at(0, 10, 40, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             events.next().unwrap()
         );
@@ -523,13 +523,13 @@ mod tests {
         let schedule = "0 0/10 * * * * *".parse::<Schedule>().unwrap();
         let start_time_1 = date(2017, 10, 24)
             .at(0, 0, 59, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let next_time_1 = schedule.after(start_time_1).next().unwrap();
 
         let start_time_2 = date(2017, 10, 24)
             .at(0, 1, 0, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let next_time_2 = schedule.after(start_time_2).next().unwrap();
         assert_eq!(next_time_1, next_time_2);
@@ -540,7 +540,7 @@ mod tests {
         let schedule_1 = "00 00 23 * * * *".parse::<Schedule>().unwrap();
         let start_time = date(2018, 11, 15)
             .at(22, 30, 0, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         let next_time_1 = schedule_1.after(start_time.clone()).next().unwrap();
 
@@ -555,14 +555,14 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 9, 17)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
 
         let mut schedule_iter = schedule.after(dt);
         assert_eq!(
             date(2020, 9, 18)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
             schedule_iter.next().unwrap()
         );
@@ -574,14 +574,14 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 9, 17)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
 
         let mut schedule_iter = schedule.after(dt);
         assert_eq!(
             date(2020, 9, 18)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
             schedule_iter.next().unwrap()
         );
@@ -593,34 +593,34 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
 
         let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 1, 1)
                 .at(0, 0, 17, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(0, 0, 34, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(0, 0, 51, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(0, 1, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(0, 1, 17, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(0, 1, 34, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -634,25 +634,25 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
         let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 3, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2021, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2021, 3, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2022, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -666,25 +666,25 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
         let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 1, 1)
                 .at(10, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(12, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 2)
                 .at(10, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 2)
                 .at(12, 0, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -698,37 +698,37 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
         let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 1, 11)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 21)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 31)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 2, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 2, 11)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 2, 21)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 3, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -742,33 +742,33 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
         let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 2, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 3, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 4, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 5, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 6, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2021, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -782,17 +782,17 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
         let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2030, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2040, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -806,41 +806,41 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
         let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 1, 1)
                 .at(0, 21, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(0, 42, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(1, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(1, 21, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(1, 42, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(2, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(2, 21, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2020, 1, 1)
                 .at(2, 42, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -854,25 +854,25 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let dt = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
         let mut schedule_iter = schedule.after(dt);
         let expected_values = [
             date(2020, 3, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2021, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2021, 3, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz.clone())
+                .to_zoned_datetime(schedule_tz.clone())
                 .unwrap(),
             date(2022, 1, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(schedule_tz)
+                .to_zoned_datetime(schedule_tz)
                 .unwrap(),
         ];
         for expected_value in expected_values.iter() {
@@ -898,11 +898,11 @@ mod tests {
         let schedule_tz = TimeZone::get("Europe/London").unwrap();
         let included = date(2020, 1, 12)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz.clone())
+            .to_zoned_datetime(schedule_tz.clone())
             .unwrap();
         let not_included = date(2020, 1, 11)
             .at(0, 0, 0, 0)
-            .to_zoned(schedule_tz)
+            .to_zoned_datetime(schedule_tz)
             .unwrap();
         assert!(schedule.includes(included));
         assert!(!schedule.includes(not_included));

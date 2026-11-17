@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use jiff::{tz::TimeZone, RoundMode, ToSpan as _, Unit, Zoned, ZonedRound};
+use jiff::{tz::TimeZone, RoundMode, ToSpan as _, Unit, ZonedDateTime, ZonedDateTimeRound};
 #[cfg(feature = "serde")]
 use serde::{
     de::{self, Visitor},
@@ -41,7 +41,7 @@ impl Schedule {
 
     // Get the current value for the corresponding unit in the given timestamp
     // with associated timezone.
-    fn current(zoned: &Zoned, unit: Unit) -> u32 {
+    fn current(zoned: &ZonedDateTime, unit: Unit) -> u32 {
         match unit {
             Unit::Second => zoned.second() as u32,
             Unit::Minute => zoned.minute() as u32,
@@ -53,7 +53,7 @@ impl Schedule {
         }
     }
 
-    fn adjust_next(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
+    fn adjust_next(&self, zoned: &ZonedDateTime, unit: Unit) -> Option<ZonedDateTime> {
         let ordinals = self.ordinals(unit);
         let current = Self::current(zoned, unit);
 
@@ -81,7 +81,7 @@ impl Schedule {
         zoned.checked_add(interval).ok()
     }
 
-    fn adjust_prev(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
+    fn adjust_prev(&self, zoned: &ZonedDateTime, unit: Unit) -> Option<ZonedDateTime> {
         let ordinals = self.ordinals(unit);
         let current = Self::current(zoned, unit);
 
@@ -106,7 +106,7 @@ impl Schedule {
         zoned.checked_sub(interval).ok()
     }
 
-    fn reset_next(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
+    fn reset_next(&self, zoned: &ZonedDateTime, unit: Unit) -> Option<ZonedDateTime> {
         let ordinals = self.ordinals(unit);
 
         // `Month` reset must jointly set `Day` to respect the days-in-month
@@ -154,7 +154,7 @@ impl Schedule {
         })
     }
 
-    fn reset_prev(&self, zoned: &Zoned, unit: Unit) -> Option<Zoned> {
+    fn reset_prev(&self, zoned: &ZonedDateTime, unit: Unit) -> Option<ZonedDateTime> {
         let ordinals = self.ordinals(unit);
 
         // `Month` reset must jointly set `Day` to respect the days-in-month
@@ -208,7 +208,7 @@ impl Schedule {
         })
     }
 
-    fn next_after(&self, after: &Zoned) -> Option<Zoned> {
+    fn next_after(&self, after: &ZonedDateTime) -> Option<ZonedDateTime> {
         let units = [
             Unit::Second,
             Unit::Minute,
@@ -221,7 +221,7 @@ impl Schedule {
         // First try rounding up the candidate to the nearest second.
         let mut candidate = after
             .round(
-                ZonedRound::new()
+                ZonedDateTimeRound::new()
                     .smallest(Unit::Second)
                     .mode(RoundMode::Ceil),
             )
@@ -317,7 +317,7 @@ impl Schedule {
         }
     }
 
-    fn prev_from(&self, before: &Zoned) -> Option<Zoned> {
+    fn prev_from(&self, before: &ZonedDateTime) -> Option<ZonedDateTime> {
         let units = [
             Unit::Second,
             Unit::Minute,
@@ -330,7 +330,7 @@ impl Schedule {
         // First try rounding up the candidate to the nearest second.
         let mut candidate = before
             .round(
-                ZonedRound::new()
+                ZonedDateTimeRound::new()
                     .smallest(Unit::Second)
                     .mode(RoundMode::Floor),
             )
@@ -426,31 +426,31 @@ impl Schedule {
         }
     }
 
-    /// Provides an iterator which will return each [`jiff::Zoned`] that matches
-    /// the schedule starting with the current time if applicable.
+    /// Provides an iterator which will return each [`jiff::ZonedDateTime`] that
+    /// matches the schedule starting with the current time if applicable.
     pub fn upcoming(&self, timezone: TimeZone) -> ScheduleIterator<'_> {
-        let after = Zoned::now().with_time_zone(timezone);
+        let after = ZonedDateTime::now().with_time_zone(timezone);
         self.after(after)
     }
 
     /// The same, but with an iterator with a static ownership
     pub fn into_upcoming(self, timezone: TimeZone) -> OwnedScheduleIterator {
-        let after = Zoned::now().with_time_zone(timezone);
+        let after = ZonedDateTime::now().with_time_zone(timezone);
         self.into_after(after)
     }
 
     /// Like the `upcoming` method, but allows you to specify a start time other
     /// than the present.
-    pub fn after(&self, after: Zoned) -> ScheduleIterator<'_> {
+    pub fn after(&self, after: ZonedDateTime) -> ScheduleIterator<'_> {
         ScheduleIterator::new(self, after)
     }
 
     /// The same, but with a static ownership.
-    pub fn into_after(self, after: Zoned) -> OwnedScheduleIterator {
+    pub fn into_after(self, after: ZonedDateTime) -> OwnedScheduleIterator {
         OwnedScheduleIterator::new(self, after)
     }
 
-    pub fn includes(&self, date_time: Zoned) -> bool {
+    pub fn includes(&self, date_time: ZonedDateTime) -> bool {
         self.fields.years.includes(date_time.year() as Ordinal)
             && self.fields.months.includes(date_time.month() as Ordinal)
             && self
@@ -566,12 +566,12 @@ impl ScheduleFields {
 #[derive(Clone, Debug)]
 pub struct ScheduleIterator<'a> {
     schedule: &'a Schedule,
-    previous_datetime: Option<Zoned>,
+    previous_datetime: Option<ZonedDateTime>,
 }
 //TODO: Cutoff datetime?
 
 impl<'a> ScheduleIterator<'a> {
-    fn new(schedule: &'a Schedule, starting_datetime: Zoned) -> Self {
+    fn new(schedule: &'a Schedule, starting_datetime: ZonedDateTime) -> Self {
         ScheduleIterator {
             schedule,
             previous_datetime: Some(starting_datetime),
@@ -580,9 +580,9 @@ impl<'a> ScheduleIterator<'a> {
 }
 
 impl Iterator for ScheduleIterator<'_> {
-    type Item = Zoned;
+    type Item = ZonedDateTime;
 
-    fn next(&mut self) -> Option<Zoned> {
+    fn next(&mut self) -> Option<ZonedDateTime> {
         let previous = self.previous_datetime.take()?;
 
         if let Some(next) = self.schedule.next_after(&previous) {
@@ -611,11 +611,11 @@ impl DoubleEndedIterator for ScheduleIterator<'_> {
 #[derive(Clone, Debug)]
 pub struct OwnedScheduleIterator {
     schedule: Schedule,
-    previous_datetime: Option<Zoned>,
+    previous_datetime: Option<ZonedDateTime>,
 }
 
 impl OwnedScheduleIterator {
-    fn new(schedule: Schedule, starting_datetime: Zoned) -> Self {
+    fn new(schedule: Schedule, starting_datetime: ZonedDateTime) -> Self {
         Self {
             schedule,
             previous_datetime: Some(starting_datetime),
@@ -624,9 +624,9 @@ impl OwnedScheduleIterator {
 }
 
 impl Iterator for OwnedScheduleIterator {
-    type Item = Zoned;
+    type Item = ZonedDateTime;
 
-    fn next(&mut self) -> Option<Zoned> {
+    fn next(&mut self) -> Option<ZonedDateTime> {
         let previous = self.previous_datetime.take()?;
 
         if let Some(next) = self.schedule.next_after(&previous) {
@@ -760,20 +760,20 @@ mod test {
 
         let starting_date = date(2017, 2, 25)
             .at(22, 29, 36, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         assert!([
             date(2017, 2, 25)
                 .at(23, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             date(2017, 2, 26)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             date(2017, 2, 26)
                 .at(1, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
         ]
         .into_iter()
@@ -794,36 +794,36 @@ mod test {
 
         let starting_date = date(2020, 1, 1)
             .at(0, 0, 0, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
         assert!([
             date(2020, 1, 11)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             date(2020, 1, 21)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             date(2020, 1, 31)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             date(2020, 2, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             date(2020, 2, 11)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             date(2020, 2, 21)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
             date(2020, 3, 1)
                 .at(0, 0, 0, 0)
-                .to_zoned(TimeZone::UTC)
+                .to_zoned_datetime(TimeZone::UTC)
                 .unwrap(),
         ]
         .into_iter()
@@ -835,7 +835,7 @@ mod test {
         let expression = "0 5,13,40-42 17 1 Jan *";
         let schedule = Schedule::from_str(expression).unwrap();
 
-        let utc_now = Zoned::now().with_time_zone(TimeZone::UTC);
+        let utc_now = ZonedDateTime::now().with_time_zone(TimeZone::UTC);
         let next = schedule.next_after(&utc_now);
         println!("NEXT AFTER for {} {:?}", expression, next);
         assert!(next.is_some());
@@ -865,7 +865,7 @@ mod test {
         // Schedule after 2021-10-27
         let starting_point = jiff::civil::date(2021, 10, 27)
             .at(0, 0, 0, 0)
-            .to_zoned(TimeZone::UTC)
+            .to_zoned_datetime(TimeZone::UTC)
             .unwrap();
 
         // Triggers on 2022-06-01. Note that the month and day are smaller than
@@ -881,7 +881,7 @@ mod test {
     fn test_prev_from() {
         let expression = "0 5,13,40-42 17 1 Jan *";
         let schedule = Schedule::from_str(expression).unwrap();
-        let utc_now = Zoned::now().with_time_zone(TimeZone::UTC);
+        let utc_now = ZonedDateTime::now().with_time_zone(TimeZone::UTC);
         let prev = schedule.prev_from(&utc_now);
         println!("PREV FROM for {expression} {prev:?}");
         assert!(prev.is_some());
@@ -891,7 +891,7 @@ mod test {
     fn test_next_after() {
         let expression = "0 5,13,40-42 17 1 Jan *";
         let schedule = Schedule::from_str(expression).unwrap();
-        let utc_now = Zoned::now().with_time_zone(TimeZone::UTC);
+        let utc_now = ZonedDateTime::now().with_time_zone(TimeZone::UTC);
         let next = schedule.next_after(&utc_now);
         println!("NEXT AFTER for {expression} {next:?}");
         assert!(next.is_some());
@@ -1012,7 +1012,7 @@ mod test {
         let schedule_tz: TimeZone = TimeZone::get("Europe/London").unwrap();
         let dt = DateTime::new(2019, 10, 27, 0, 3, 29, 0)
             .unwrap()
-            .to_zoned(schedule_tz)
+            .to_zoned_datetime(schedule_tz)
             .unwrap()
             .checked_add(Span::new().hours(1))
             .unwrap(); // puts it in the middle of the DST transition
@@ -1027,7 +1027,7 @@ mod test {
         let schedule_tz: TimeZone = TimeZone::get("Europe/London").unwrap();
         let dt = DateTime::new(2019, 10, 27, 0, 3, 29, 0)
             .unwrap()
-            .to_zoned(schedule_tz)
+            .to_zoned_datetime(schedule_tz)
             .unwrap()
             .checked_add(Span::new().hours(1))
             .unwrap(); // puts it in the middle of the DST transition
@@ -1042,7 +1042,7 @@ mod test {
         let schedule_tz: TimeZone = TimeZone::get("Europe/London").unwrap();
         let dt = DateTime::new(2100, 12, 31, 0, 0, 0, 0)
             .unwrap()
-            .to_zoned(schedule_tz)
+            .to_zoned_datetime(schedule_tz)
             .unwrap();
 
         let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
@@ -1054,7 +1054,7 @@ mod test {
         let schedule_tz: TimeZone = TimeZone::get("Europe/London").unwrap();
         let dt = DateTime::new(1970, 1, 1, 0, 0, 0, 0)
             .unwrap()
-            .to_zoned(schedule_tz)
+            .to_zoned_datetime(schedule_tz)
             .unwrap();
 
         let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
@@ -1063,7 +1063,7 @@ mod test {
 
     #[test]
     fn test_no_panic_on_leap_day_time_after() {
-        let dt = Zoned::from_str("2024-02-29T10:00:00.000+08:00[Asia/Singapore]").unwrap(); // N.B. TZ inferred from original
+        let dt = ZonedDateTime::from_str("2024-02-29T10:00:00.000+08:00[Asia/Singapore]").unwrap(); // N.B. TZ inferred from original
 
         let schedule = Schedule::from_str("0 0 0 * * * 2100").unwrap();
         let next = schedule.after(dt.clone()).next().unwrap();
@@ -1106,7 +1106,7 @@ mod test {
         let schedule_tz = TimeZone::get("America/Chicago").unwrap();
         let dt = DateTime::new(2022, 11, 5, 23, 30, 0, 0)
             .unwrap()
-            .to_zoned(schedule_tz)
+            .to_zoned_datetime(schedule_tz)
             .unwrap();
         let schedule = Schedule::from_str("0 0 * * * * *").unwrap();
         let times = schedule
@@ -1130,7 +1130,7 @@ mod test {
         let schedule_tz = TimeZone::get("America/Chicago").unwrap();
         let dt = DateTime::new(2022, 11, 6, 3, 30, 0, 0)
             .unwrap()
-            .to_zoned(schedule_tz)
+            .to_zoned_datetime(schedule_tz)
             .unwrap();
         let schedule = Schedule::from_str("0 0 * * * * *").unwrap();
         let times = schedule
